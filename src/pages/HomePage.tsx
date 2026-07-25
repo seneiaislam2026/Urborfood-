@@ -133,7 +133,7 @@ export default function HomePage() {
           <section className="container mx-auto px-4 max-w-7xl py-12">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">জনপ্রিয় পণ্য</h2>
+                <h2 className="text-[22px] font-black text-[#1e293b] tracking-tight">জনপ্রিয় পণ্য</h2>
                 <p className="text-sm text-slate-500 font-medium mt-1">কাস্টমারদের সবচেয়ে পছন্দের আইটেমগুলো</p>
               </div>
             </div>
@@ -177,11 +177,11 @@ export default function HomePage() {
                       
                       <div className="flex items-end justify-between mt-auto">
                         <div>
-                          <div className="text-[11px] text-slate-400 font-bold mb-1  leading-relaxed">{product.weight || 'কেজি'}</div>
+                          <div className="text-[11px] text-slate-400 font-bold mb-1 bn-safe ">{product.weight || 'কেজি'}</div>
                           <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-emerald-600 ">&nbsp;৳{toBanglaNumber(product.discountedPrice || product.originalPrice)}</span>
+                            <span className="text-2xl font-black text-emerald-600 font-hind">৳{toBanglaNumber(product.discountedPrice || product.originalPrice)}</span>
                             {product.discountedPrice && (
-                              <span className="text-sm font-bold text-rose-500 line-through ">&nbsp;৳{toBanglaNumber(product.originalPrice)}</span>
+                              <span className="text-sm font-bold text-rose-500 line-through font-hind">৳{toBanglaNumber(product.originalPrice)}</span>
                             )}
                           </div>
                         </div>

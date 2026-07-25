@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
+
 import { Product } from '../types';
+import { toBanglaNumber } from '../utils/banglaHelpers';
 import { mockProducts } from '../data/mock';
 
 export interface CartItem extends Product {
@@ -109,6 +113,10 @@ const playNotificationSound = () => {
     gain2.connect(ctx.destination);
     osc2.start(ctx.currentTime + 0.12);
     osc2.stop(ctx.currentTime + 0.55);
+    
+    setTimeout(() => {
+      if (ctx.state !== "closed") ctx.close();
+    }, 1000);
   } catch (error) {
     console.warn("Chime Audio Synthesizer blocked or failed:", error);
   }
@@ -169,66 +177,18 @@ const playAddToCartSound = () => {
     // Play a delightful, warm upward chime interval (G5 then C6)
     playNote(783.99, now, 0.28); // G5 (Soft warm tap)
     playNote(1046.50, now + 0.07, 0.38); // C6 (Sweet crisp high note)
+    
+    // Close context after sound finishes to prevent hardware context limit crash
+    setTimeout(() => {
+      if (ctx.state !== "closed") ctx.close();
+    }, 1000);
   } catch (error) {
     console.warn("Cart audio blocked or failed:", error);
   }
 };
 
-const getStoredProducts = (): Product[] => {
-  if (!isClient) return mockProducts.map(p => ({
-    ...p,
-    stock: p.stock !== undefined ? p.stock : Math.floor(15 + Math.random() * 35),
-    lowStockAlert: p.lowStockAlert !== undefined ? p.lowStockAlert : 5
-  }));
-  const stored = localStorage.getItem('mega_products_v3');
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      let modified = false;
-      const migrated = parsed.map((p: any) => {
-        if (p.stock === undefined || p.lowStockAlert === undefined) {
-          modified = true;
-          return {
-            ...p,
-            stock: p.stock !== undefined ? p.stock : Math.floor(15 + Math.random() * 35),
-            lowStockAlert: p.lowStockAlert !== undefined ? p.lowStockAlert : 5
-          };
-        }
-        return p;
-      });
-      // Merge new mock products if they don't exist in local storage
-      const existingIds = new Set(migrated.map(p => p.id));
-      let hasNew = false;
-      const merged = [...migrated];
-      for (const mp of mockProducts) {
-        if (!existingIds.has(mp.id)) {
-          hasNew = true;
-          merged.push({
-            ...mp,
-            stock: mp.stock !== undefined ? mp.stock : Math.floor(15 + Math.random() * 35),
-            lowStockAlert: mp.lowStockAlert !== undefined ? mp.lowStockAlert : 5
-          });
-        }
-      }
-      
-      if (modified || hasNew) {
-        localStorage.setItem('mega_products_v3', JSON.stringify(merged));
-      }
-      return merged;
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  
-  // Safe default initialization of products in localStorage
-  const initialProducts = mockProducts.map(p => ({
-    ...p,
-    stock: p.stock !== undefined ? p.stock : Math.floor(15 + Math.random() * 35),
-    lowStockAlert: p.lowStockAlert !== undefined ? p.lowStockAlert : 5
-  }));
-  localStorage.setItem('mega_products_v3', JSON.stringify(initialProducts));
-  return initialProducts;
-};
+
+
 
 const initialMockOrders: Order[] = [
   {
@@ -271,27 +231,14 @@ const initialMockOrders: Order[] = [
   }
 ];
 
-const getStoredOrders = (): Order[] => {
-  if (!isClient) return initialMockOrders;
-  const stored = localStorage.getItem('mega_orders');
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  // Initialize in localStorage if empty
-  localStorage.setItem('mega_orders', JSON.stringify(initialMockOrders));
-  return initialMockOrders;
-};
+
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [products, setProducts] = useState<Product[]>(getStoredProducts);
-  const [orders, setOrders] = useState<Order[]>(getStoredOrders);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   
   // Custom Cart Toast state for beautiful feedback when adding items
   const [cartToast, setCartToast] = useState<{
@@ -312,17 +259,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cartToast]);
 
   // Notifications state
-  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
-    if (!isClient) return [];
-    try {
-      const stored = localStorage.getItem('mega_notifications');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // Sound and Desktop Push Settings
+  
+  useEffect(() => {
+    if (!isClient) return;
+    const unsubProducts = onSnapshot(doc(db, 'appData', 'products'), (docSnap) => {
+      if (docSnap.exists()) {
+        setProducts(docSnap.data().data);
+      } else {
+        // Init mock
+        import('../data/mock').then(({ mockProducts }) => {
+            const initial = mockProducts.map(p => ({ ...p, stock: 20, lowStockAlert: 5 }));
+            setProducts(initial);
+            setDoc(doc(db, 'appData', 'products'), { data: initial });
+        });
+      }
+    });
+
+    const unsubOrders = onSnapshot(doc(db, 'appData', 'orders'), (docSnap) => {
+      if (docSnap.exists()) {
+        setOrders(docSnap.data().data);
+      } else {
+        setOrders([]);
+      }
+    });
+    
+    const unsubNotifications = onSnapshot(doc(db, 'appData', 'notifications'), (docSnap) => {
+      if (docSnap.exists()) {
+        setNotifications(docSnap.data().data);
+      } else {
+        setNotifications([]);
+      }
+    });
+
+    return () => {
+      unsubProducts();
+      unsubOrders();
+      unsubNotifications();
+    };
+  }, []);
+
+  // Sync back to Firebase when state changes (debounced or directly in the action functions)
+  // Wait, if we use onSnapshot, updating state locally will trigger it again?
+  // Actually, we shouldn't sync back in useEffect because it will cause loops.
+  // We should update Firebase inside addProduct, updateProduct, placeOrder, etc.
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     if (!isClient) return true;
     return localStorage.getItem('mega_sound_enabled') !== 'false';
@@ -338,23 +321,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Persist notifications
   useEffect(() => {
     if (isClient) {
-      localStorage.setItem('mega_notifications', JSON.stringify(notifications));
+      setDoc(doc(db, 'appData', 'notifications'), { data: notifications });
     }
   }, [notifications]);
 
   // Sync products to local storage
-  useEffect(() => {
-    if (isClient) {
-      localStorage.setItem('mega_products_v3', JSON.stringify(products));
-    }
-  }, [products]);
+  
 
   // Sync orders to local storage
-  useEffect(() => {
-    if (isClient) {
-      localStorage.setItem('mega_orders', JSON.stringify(orders));
-    }
-  }, [orders]);
+  
 
   // Persist sound config
   useEffect(() => {
@@ -525,7 +500,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const updated = [newOrder, ...prev];
       // Sync straight away to trigger notifications
       if (isClient) {
-        localStorage.setItem('mega_orders', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -557,7 +532,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setOrders(prev => {
       const updated = [newOrder, ...prev];
       if (isClient) {
-        localStorage.setItem('mega_orders', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -573,7 +548,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         order.id === id ? { ...order, status } : order
       );
       if (isClient) {
-        localStorage.setItem('mega_orders', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -583,7 +558,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setOrders(prev => {
       const updated = prev.filter(order => order.id !== id);
       if (isClient) {
-        localStorage.setItem('mega_orders', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -598,9 +573,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       reviews: 0
     };
     setProducts(prev => {
-      const updated = [newProduct, ...prev];
+      const current = prev || [];
+      const updated = [newProduct, ...current];
       if (isClient) {
-        localStorage.setItem('mega_products_v3', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'products'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -608,9 +584,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateProduct = (updatedProd: Product) => {
     setProducts(prev => {
-      const updated = prev.map(p => p.id === updatedProd.id ? updatedProd : p);
+      const current = prev || [];
+      const updated = current.map(p => p.id === updatedProd.id ? updatedProd : p);
       if (isClient) {
-        localStorage.setItem('mega_products_v3', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'products'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -618,9 +595,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const deleteProduct = (id: string) => {
     setProducts(prev => {
-      const updated = prev.filter(p => p.id !== id);
+      const current = prev || [];
+      const updated = current.filter(p => p.id !== id);
       if (isClient) {
-        localStorage.setItem('mega_products_v3', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'products'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -631,7 +609,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setOrders(prev => {
       const updated = [simulatedOrder, ...prev];
       if (isClient) {
-        localStorage.setItem('mega_orders', JSON.stringify(updated));
+        setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -710,7 +688,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             <h4 className="text-xs font-black text-emerald-400">কার্টে যোগ করা হয়েছে! 🛒</h4>
             <div className="text-sm font-extrabold truncate text-white mt-0.5">{cartToast.productName}</div>
             <p className="text-[11px] text-slate-400 font-bold mt-0.5">
-              পরিমাণ: {cartToast.quantity}টি &bull; মূল্য: ৳{(cartToast.productPrice * cartToast.quantity).toLocaleString()}
+              পরিমাণ: {cartToast.quantity}টি &bull; মূল্য: ৳{toBanglaNumber(cartToast.productPrice * cartToast.quantity)}
             </p>
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">

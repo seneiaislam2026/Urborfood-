@@ -184,7 +184,7 @@ export default function PriceListModal() {
                           </div>
                         </td>
                         <td className="p-3 sm:p-4 text-slate-500 font-medium">{product.category}</td>
-                        <td className="p-3 sm:p-4 text-slate-600 font-bold">{product.weight}</td>
+                        <td className="p-3 sm:p-4 text-slate-600 font-bold bn-safe">{product.weight}</td>
                         <td className="p-3 sm:p-4 text-right text-rose-500 line-through font-normal">
                           {hasDiscount ? `৳${product.originalPrice}` : '-'}
                         </td>

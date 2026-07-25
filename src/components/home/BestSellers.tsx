@@ -1,8 +1,6 @@
 import React from 'react';
-import { useCart } from '../../context/CartContext';
-import { useUI } from '../../context/UIContext';
-import ImageLoader from '../ui/ImageLoader';
-import { ShoppingCart, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import ProductCard from '../ui/ProductCard';
 
 const bestSellerProducts = [
   {
@@ -68,9 +66,6 @@ const bestSellerProducts = [
 ];
 
 export default function BestSellers() {
-  const { addToCart } = useCart();
-  const { setSelectedProduct } = useUI();
-
   return (
     <section className="py-6 bg-transparent select-none pb-12 border-b border-gray-100">
       <div className="container mx-auto px-4 max-w-[1400px]">
@@ -82,49 +77,9 @@ export default function BestSellers() {
           </button>
         </div>
 
-        {/* 5 columns grid matching the screenshot */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {bestSellerProducts.map(product => (
-            <div 
-              key={product.id}
-              onClick={() => setSelectedProduct(product as any)}
-              className="bg-zinc-50/50 rounded-2xl border border-gray-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-[#0b3d18]/20 transition-all duration-300 group relative flex flex-col h-full cursor-pointer overflow-hidden p-0"
-            >
-              {/* Discount Badge */}
-              <div className="absolute top-4 left-4 z-20 bg-[#0b3d18] text-white px-2.5 py-1 rounded-md text-[11px] font-bold shadow-sm">
-                {product.discountLabel}
-              </div>
-
-              {/* Product Layout */}
-              <div className="p-5 pt-8 flex-1 flex flex-col">
-                 <div className="w-full aspect-square mb-4 relative flex items-center justify-center overflow-hidden rounded-xl">
-                    <ImageLoader 
-                      src={product.image} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
-                    />
-                 </div>
-                 
-                 <h3 className="text-[15px] font-black text-gray-900 leading-snug group-hover:text-[#0b3d18] transition-colors mt-auto pt-2">
-                   {product.name}
-                 </h3>
-              </div>
-
-              {/* Price & Add to Cart Footer */}
-              <div className="px-5 pb-5 pt-1 mt-auto flex items-end justify-between">
-                <div className="flex items-center gap-2">
-                   <span className="text-[17px] font-black text-[#0b3d18]">&nbsp;৳ {product.discountedPrice}</span>
-                   <span className="text-xs font-bold text-rose-500 line-through">&nbsp;৳ {product.originalPrice}</span>
-                </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); addToCart(product as any); }} 
-                  className="w-10 h-10 rounded-xl bg-[#0b3d18] text-white hover:bg-[#072a10] hover:-translate-y-1 transition-all flex items-center justify-center cursor-pointer shadow-md"
-                  title="কার্টে যোগ করুন"
-                >
-                  <ShoppingCart size={18} strokeWidth={2.5} />
-                </button>
-              </div>
-            </div>
+            <ProductCard key={product.id} product={product as any} />
           ))}
         </div>
       </div>

@@ -169,13 +169,13 @@ export default function FlashSale() {
                       <h3 className="text-[13px] font-black text-slate-800 leading-[1.6] pb-1 line-clamp-1 group-hover:text-[#1b4332] transition-colors">
                         {product.name}
                       </h3>
-                      <p className="text-[11px] text-zinc-500 font-bold mt-0.5 mb-2">{product.weight}</p>
+                      
 
                       {/* Prices & cart btn */}
                       <div className="mt-auto flex items-center justify-between gap-1.5 pt-2 border-t border-gray-150">
                         <div className="flex flex-col">
-                          <span className="text-xs text-rose-500 line-through font-bold">&nbsp;৳{toBanglaNumber(product.originalPrice)}</span>
-                          <span className="text-[14px] font-extrabold text-[#1b4332] leading-tight mt-0.5">&nbsp;৳{toBanglaNumber(product.discountedPrice || 0)}</span>
+                          <span className="text-xs text-rose-500 line-through font-bold font-hind">৳{toBanglaNumber(product.originalPrice)}</span>
+                          <span className="text-[14px] font-extrabold text-[#1b4332] leading-tight mt-0.5 font-hind">৳{toBanglaNumber(product.discountedPrice || 0)}</span>
                         </div>
                         <button 
                           onClick={(e) => { 

@@ -1,53 +1,15 @@
-import re
-
 with open('src/components/ui/ProductCard.tsx', 'r') as f:
     content = f.read()
 
-# Change aspect-[4/3] to aspect-square and adjust padding
-content = content.replace(
-    'className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-50"',
-    'className="relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-50"'
-)
+# Remove p-3 from the main card container
+content = content.replace('transform hover:-translate-y-1 p-3"', 'transform hover:-translate-y-1"')
 
-# Remove the two big buttons and add a small circular add-to-cart button
-old_buttons = """          <div className="flex items-center gap-2 w-full">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedProduct(product);
-              }}
-              className="flex-1 min-w-0 bg-slate-50 hover:bg-slate-200 text-slate-700 h-10 rounded-xl flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-bold transition-colors shadow-sm"
-            >
-              <Eye size={14} strokeWidth={2.5} />
-              <span className="truncate">বিস্তারিত</span>
-            </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                addToCart(product);
-              }}
-              className="flex-1 min-w-0 bg-emerald-50 hover:bg-emerald-500 text-emerald-700 hover:text-white h-10 rounded-xl flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-bold transition-colors shadow-sm"
-            >
-              <ShoppingCart size={14} strokeWidth={2.5} />
-              <span className="truncate">কার্টে যোগ</span>
-            </button>
-          </div>"""
+# Change the image container to not have rounded corners at the bottom, and no top margin
+content = content.replace('className="relative w-full aspect-[4/3] rounded-[16px] overflow-hidden bg-slate-50 mb-4"', 'className="relative w-full aspect-[4/3] overflow-hidden bg-slate-50 mb-4"')
 
-new_buttons = """          <div className="flex items-center justify-between w-full">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                addToCart(product);
-              }}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-10 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-colors shadow-sm"
-            >
-              <ShoppingCart size={16} strokeWidth={2.5} />
-              <span>অর্ডার করুন</span>
-            </button>
-          </div>"""
-
-content = content.replace(old_buttons, new_buttons)
+# Add padding to the content area
+content = content.replace('className="px-1 flex flex-col flex-1"', 'className="px-4 pb-4 pt-1 flex flex-col flex-1"')
 
 with open('src/components/ui/ProductCard.tsx', 'w') as f:
     f.write(content)
-
+print("ProductCard updated for edge-to-edge image")

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -22,6 +22,22 @@
 }
 
 @layer utilities {
+  .font-noto {
+    font-family: "Noto Sans Bengali", sans-serif !important;
+  }
+  .font-hind {
+    font-family: "Hind Siliguri", sans-serif !important;
+  }
+  .bn-safe {
+    
+    line-height: 1.5 !important;
+    overflow: visible !important;
+    padding-top: 0.25em;
+    padding-bottom: 0.1em;
+  }
+  span.bn-safe, a.bn-safe, label.bn-safe, p.bn-safe {
+    display: inline-block;
+  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

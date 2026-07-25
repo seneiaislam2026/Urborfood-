@@ -242,12 +242,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     return defaultVal;
   });
 
-  // Persist transactions to localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mega_transactions', JSON.stringify(transactions));
-    }
-  }, [transactions]);
+  
 
   // Transaction form states
   const [txType, setTxType] = useState<'income' | 'expense'>('income');
@@ -574,7 +569,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <td style="padding: 12px 8px; font-family: monospace; font-size: 11px;">#${order.id}</td>
           <td style="padding: 12px 8px; font-size: 12px;">
             <strong style="color: #111;">${order.customerName}</strong><br/>
-            <span style="color: #666; font-size: 11px; font-family: monospace;">${order.phone}</span>
+            <span style="color: #666; font-size: 11px; font-family: monospace;">${order.phone}
           </td>
           <td style="padding: 12px 8px; font-size: 11px; max-width: 180px; word-wrap: break-word; color: #444;">${order.address}</td>
           <td style="padding: 12px 8px; font-size: 11px; max-width: 220px; word-wrap: break-word; color: #444;">${itemsStr}</td>
@@ -1433,7 +1428,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               </div>
                             </div>
                           ))
-                        )}
+                  )}
                       </div>
                     </div>
                   )}
@@ -1604,7 +1599,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               </tr>
                             );
                           })
-                        )}
+                  )}
                       </tbody>
                 </table>
                   </div>
@@ -1659,7 +1654,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         );
                       })
-                    )}
+                  )}
                   </div>
                 </div>
 
@@ -1851,7 +1846,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             </div>
                           </td>
                           <td className="p-4 text-slate-500 font-medium">{product.category}</td>
-                          <td className="p-4 text-slate-500  font-medium">{product.weight}</td>
+                          <td className="p-4 text-slate-500  font-medium bn-safe">{product.weight}</td>
                           <td className="p-4 select-none">
                             {product.discountedPrice ? (
                               <div className="flex flex-col">
@@ -1889,7 +1884,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </td>
                         </tr>
                       ))
-                    )}
+                  )}
                   </tbody>
                 </table>
               </div>
@@ -2017,7 +2012,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               )}
                               <div>
                                 <span className="block text-slate-900 font-bold text-[13px]">{p.name}</span>
-                                <span className="text-[10px] text-slate-500">{p.category} • {p.weight}</span>
+                                <span className="text-[10px] text-slate-500 bn-safe">{p.category} • {p.weight}</span>
                               </div>
                             </div>
                           </td>
@@ -2077,7 +2072,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                         <div className="flex-1 min-w-0 pr-8">
                           <h4 className="font-bold text-slate-800 text-[14px] leading-normal mb-1">{p.name}</h4>
-                          <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
+                          <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 bn-safe">
                             {p.category} • {p.weight}
                           </span>
                         </div>
@@ -2300,7 +2295,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </tr>
                         );
                       })
-                    )}
+                  )}
                   </tbody>
                 </table>
               </div>
@@ -2314,7 +2309,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <div key={order.id} className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 p-5 flex flex-col gap-4 mx-4">
                       {/* Card Header: Order ID & Status with compact typography */}
                       <div className="flex items-center justify-between pb-3 border-b border-slate-100/80">
-                        <span className="text-[11px] text-slate-400 font-bold">#{order.id}</span>
+                        <span className="text-[11px] text-slate-400 font-bold">#{order.id}
                         <span className={`inline-flex px-2.5 py-1 rounded-md text-[10px] font-black tracking-wide ${
                           order.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' :
                               order.status === 'Shipped' ? 'bg-blue-50 text-blue-600 border border-blue-100/50' :
@@ -2322,7 +2317,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100/50' :
                           'bg-amber-50 text-amber-600 border border-amber-100/50'
                         }`}>
-                          {order.status === 'Completed' ? 'ডেলিভারি সম্পন্ন' : order.status === 'Cancelled' ? 'বাতিল' : order.status === 'Shipped' ? 'ডেলিভারি পার্টনারের কাছে হস্তান্তরিত' : order.status === 'Confirmed' ? 'পণ্য প্রস্তুত করা হচ্ছে' : 'পেন্ডিং'}
+                          {order.status === 'Completed' ? 'ডেলিভারি সম্পন্ন' : order.status === 'Cancelled' ? 'বাতিল' : order.status === 'Shipped' ? 'ডেলিভারি পার্টনারের কাছে হস্তান্তরিত' : order.status === 'Confirmed' ? 'পণ্য প্রস্তুত করা হচ্ছে' : 'পেন্ডিং'}</span>
                         </span>
                       </div>
 
@@ -2499,7 +2494,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             </td>
                           </tr>
                         ))
-                      )}
+                  )}
                     </tbody>
                 </table>
                 </div>
@@ -2538,7 +2533,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         </div>
                       ))
-                    )}
+                  )}
                   </div>
                 </div>
               </div>
@@ -3034,19 +3029,19 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       
                       <div className="space-y-3.5">
                         <div className="flex gap-3">
-                          <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-700">১</div>
+                          <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-700 bn-safe">১</div>
                           <div>
-                            <h4 className="text-sm font-medium text-slate-800">মাসের বেতন সেশন (১ থেকে ১০ তারিখ)</h4>
+                            <h4 className="text-sm font-medium text-slate-800 bn-safe">মাসের বেতন সেশন (১ থেকে ১০ তারিখ)</h4>
                             <p className="text-[10.5px] text-slate-500 font-medium mt-0.5 leading-relaxed">
-                              এই সময়ে ক্রেতাদের ক্রয়ক্ষমতা সর্বোচ্চ থাকে। আপনার সম্পূর্ণ মাসিক বাজেটের <span className="text-emerald-600 font-bold">৫০% থেকে ৬০%</span> এই ১০ দিনে খরচ করা উচিত। বিশেষ করে ঘি, সুন্দরবনের মধু এবং সরিষার তেলের মতো প্রিমিয়াম খাদ্য আইটেমগুলোর বুস্ট সচল করুন।
+                              এই সময়ে ক্রেতাদের ক্রয়ক্ষমতা সর্বোচ্চ থাকে। আপনার সম্পূর্ণ মাসিক বাজেটের <span className="text-emerald-600 font-bold bn-safe">৫০% থেকে ৬০%</span> এই ১০ দিনে খরচ করা উচিত। বিশেষ করে ঘি, সুন্দরবনের মধু এবং সরিষার তেলের মতো প্রিমিয়াম খাদ্য আইটেমগুলোর বুস্ট সচল করুন।
                             </p>
                           </div>
                         </div>
 
                         <div className="flex gap-3">
-                          <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-700">২</div>
+                          <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-700 bn-safe">২</div>
                           <div>
-                            <h4 className="text-sm font-medium text-slate-800">দৈনিক পিক-আওয়ার (সন্ধ্যা ৬:০০ - রাত ১০:০০)</h4>
+                            <h4 className="text-sm font-medium text-slate-800 bn-safe">দৈনিক পিক-আওয়ার (সন্ধ্যা ৬:০০ - রাত ১০:০০)</h4>
                             <p className="text-[10.5px] text-slate-500 font-medium mt-0.5 leading-relaxed">
                               অর্গানিক খাবার ও গ্রোসারির ফেসবুকে সবচেয়ে বেশি অর্ডার আসে বিকেলে ও রাতে। আপনার বিজ্ঞাপন ক্যাম্পেইনগুলো রাতে একটিভ রাখুন এবং মেসেঞ্জার চ্যাটে ইনস্ট্যান্ট রিপ্লাই সচল রাখুন।
                             </p>
@@ -3142,7 +3137,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                           
                           {oneTimeCustomers.length === 0 ? (
-                            <p className="text-[10px] text-slate-500 font-medium bg-[#f8fafc] p-3 rounded-xl border border-dashed">১ বার কিনেছেন এমন কোন কাস্টমার লিস্টে নেই।</p>
+                            <p className="text-[10px] text-slate-500 font-medium bg-[#f8fafc] p-3 rounded-xl border border-dashed bn-safe">১ বার কিনেছেন এমন কোন কাস্টমার লিস্টে নেই।</p>
                           ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1">
                               {oneTimeCustomers.map(cust => (
@@ -3390,7 +3385,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               </div>
                             </div>
                           ))
-                        )}
+                  )}
                       </div>
 
                       {/* Desktop View: Beautiful Structured Table (Visible on MD and larger screens) */}
@@ -3695,7 +3690,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <div className="flex items-center gap-2 mb-4">
                         <span className="font-bold text-emerald-600">&nbsp;৳{product.discountedPrice || product.originalPrice}</span>
                         {product.discountedPrice && <span className="text-xs text-rose-500 line-through">&nbsp;৳{product.originalPrice}</span>}
-                        <span className="text-xs text-slate-500 font-medium">/ {product.weight}</span>
+                        <span className="text-xs text-slate-500 font-medium bn-safe">/ {product.weight}</span>
                       </div>
 
                       <div className="mt-auto space-y-2.5">
@@ -3825,12 +3820,12 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 
                 <div>
                   <label className="block text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">স্টোর আউটলেট ঠিকানা</label>
-                  <input type="text" defaultValue="বাড়ি # ১৪/২৪, রোড # শাহজাহান রোড ,ব্লক # এ,মোহাম্মদপুর,ঢাকা-১২০৭, বাংলাদেশ।" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600" />
+                  <input type="text" defaultValue="বাড়ি # ১৪/২৪, রোড # শাহজাহান রোড ,ব্লক # এ,মোহাম্মদপুর,ঢাকা-১২০৭, বাংলাদেশ।" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600 bn-safe" />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">ডেলিভারি চার্জ (টাকা)</label>
-                  <input type="number" defaultValue="৮০" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600" />
+                  <input type="number" defaultValue="৮০" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600 bn-safe" />
                 </div>
 
                 <div className="pt-2">
@@ -3974,7 +3969,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="lg:col-span-7 space-y-6">
                   {/* Customer Info Card */}
                   <div className="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                    <h3 className="font-bold text-[15px] text-slate-600">১. কাস্টমারের তথ্য</h3>
+                    <h3 className="font-bold text-[15px] text-slate-600 bn-safe">১. কাস্টমারের তথ্য</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
@@ -4043,7 +4038,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                   {/* Product Picker Card */}
                   <div className="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
-                    <h3 className="font-bold text-[15px] text-slate-600">২. পণ্য এবং পরিমাণ যুক্ত করুন</h3>
+                    <h3 className="font-bold text-[15px] text-slate-600 bn-safe">২. পণ্য এবং পরিমাণ যুক্ত করুন</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                       <div className="md:col-span-7">
@@ -4347,7 +4342,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               </td>
                               <td className="p-4 text-slate-500">
                                 <div>{p.category}</div>
-                                <div className="text-[10px] text-slate-500">{p.weight}</div>
+                                <div className="text-[10px] text-slate-500 bn-safe">{p.weight}</div>
                               </td>
                               <td className="p-4 text-center text-sm font-medium">
                                 <span className={isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-500' : 'text-emerald-600'}>
@@ -4405,7 +4400,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             )}
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-slate-800 text-[13px] leading-normal truncate">{p.name}</h4>
-                              <div className="text-[10px] text-slate-500 mt-0.5">{p.category} • {p.weight}</div>
+                              <div className="text-[10px] text-slate-500 mt-0.5 bn-safe">{p.category} • {p.weight}</div>
                               <div className="text-[10px] text-slate-400 mt-0.5">ID: #{p.id}</div>
                             </div>
                           </div>
@@ -4771,7 +4766,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 <div className="text-sm text-slate-700">
                                     <pre className="whitespace-pre-wrap">{JSON.stringify(trackingResult, null, 2)}</pre>
                                 </div>
-                            )}
+                              )}
                         </div>
                       </div>
                     )}
@@ -4951,7 +4946,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               {/* Form 1: Customer Details */}
               <div className="space-y-3.5">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">১. গ্রাহকের বিবরণী</h4>
+                  <h4 className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold bn-safe">১. গ্রাহকের বিবরণী</h4>
                   <div className="flex gap-2">
                     <div className="relative">
                       <button 
@@ -5093,7 +5088,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
               {/* Form 2: Product Adder */}
               <div className="space-y-3.5">
-                <h4 className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">২. পণ্য এবং পরিমাণ যুক্ত করুন</h4>
+                <h4 className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold bn-safe">২. পণ্য এবং পরিমাণ যুক্ত করুন</h4>
                 <div className="flex gap-2 items-end">
                   <div className="flex-1">
                     <label className="block text-[10px] text-slate-500 font-medium mb-1">পণ্য নির্বাচন করুন</label>

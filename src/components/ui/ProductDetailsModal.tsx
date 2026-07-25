@@ -71,12 +71,12 @@ export default function ProductDetailsModal() {
           <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 leading-tight mb-2">
             {selectedProduct.name}
           </h2>
-          <p className="text-gray-500 text-sm mb-4">ওজন: <span className="font-semibold text-slate-700">{selectedProduct.weight}</span></p>
+          <p className="text-gray-500 text-sm mb-4">ওজন: <span className="font-semibold text-slate-700 ">{selectedProduct.weight}</span></p>
 
           <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
-            <span className="text-4xl font-extrabold text-primary leading-tight">&nbsp;৳{toBanglaNumber(price)}</span>
+            <span className="text-4xl font-extrabold text-primary leading-tight font-hind">৳{toBanglaNumber(price)}</span>
             {selectedProduct.discountedPrice && (
-              <span className="text-lg font-medium text-rose-500 line-through decoration-rose-400">&nbsp;৳{toBanglaNumber(selectedProduct.originalPrice)}</span>
+              <span className="text-lg font-medium text-rose-500 line-through decoration-rose-400 font-hind">৳{toBanglaNumber(selectedProduct.originalPrice)}</span>
             )}
           </div>
 
@@ -144,7 +144,7 @@ export default function ProductDetailsModal() {
                 <ShieldCheck size={22} strokeWidth={2.2} />
               </div>
               <div className="text-left mt-0.5">
-                <p className="text-[13px] font-bold text-[#1e293b] leading-[1.3]">১০০% হালাল<br />ও<br />নিরাপদ</p>
+                <p className="text-[13px] font-bold text-[#1e293b] leading-[1.3] bn-safe">১০০% হালাল<br />ও<br />নিরাপদ</p>
               </div>
             </div>
             
