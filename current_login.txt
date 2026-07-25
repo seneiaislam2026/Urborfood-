@@ -1,0 +1,130 @@
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#022c22] via-[#047857] to-[#0d9488] flex flex-col items-center justify-center p-4 overflow-x-hidden relative font-sans">
+        {/* Glow Spheres for Visual Depth */}
+        <div className="absolute top-10 left-10 w-72 h-72 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-teal-300/15 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: '2s' }} />
+        
+        {/* Main Card Container */}
+        <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-xl p-8 border border-white/20 shadow-[0_25px_60px_-15px_rgba(2,44,34,0.5)] relative z-10 flex flex-col">
+          
+          {/* Logo & Header Section */}
+          <div className="flex flex-col items-center text-center mb-6">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-10 h-10 text-[#00a651]">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM11 19.93C7.06 19.43 4 16.05 4 12C4 7.95 7.06 4.57 11 4.07V19.93ZM13 4.07C16.94 4.57 20 7.95 20 12C20 16.05 16.94 19.43 13 19.93V4.07Z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#0a4d46] tracking-tight">অ্যাডমিন লগইন</h2>
+            </div>
+            <p className="text-xs text-slate-500 font-medium uppercase tracking-[0.15em] mt-1.5">URBOR FOOD</p>
+            <div className="h-1 w-12 bg-gradient-to-r from-[#047857] to-[#0d9488] rounded-full mt-3" />
+          </div>
+          
+          <form className="space-y-4" onSubmit={handleLogin}>
+            {error && (
+              <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-sm font-medium text-center border border-rose-100 shadow-inner animate-shake">
+                ⚠️ {error}
+              </div>
+            )}
+            
+            {/* Username Input */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">ইউজারনেম</label>
+              <div className="bg-[#f8fafc] border border-slate-200 rounded-xl flex items-center overflow-hidden focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all duration-200">
+                <div className="w-12 h-11 bg-slate-100/80 flex items-center justify-center text-slate-500 shrink-0 border-r border-slate-200">
+                  <User size={18} strokeWidth={2} />
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="ইউজারনেম লিখুন"
+                  className="w-full h-full py-2.5 px-3 text-xs sm:text-sm font-bold text-slate-800 placeholder-slate-400 outline-none bg-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Password Input */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">পাসওয়ার্ড</label>
+              <div className="bg-[#f8fafc] border border-slate-200 rounded-xl flex items-center overflow-hidden focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:bg-white transition-all duration-200">
+                <div className="w-12 h-11 bg-slate-100/80 flex items-center justify-center text-slate-500 shrink-0 border-r border-slate-200">
+                  <Lock size={18} strokeWidth={2} />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="পাসওয়ার্ড লিখুন"
+                  className="w-full h-full py-2.5 px-3 text-xs sm:text-sm font-bold text-slate-800 placeholder-slate-400 outline-none bg-transparent"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="px-3.5 text-slate-500 hover:text-slate-600 focus:outline-none shrink-0 transition-colors"
+                >
+                  {showPassword ? <Eye size={16} strokeWidth={2} /> : <EyeOff size={16} strokeWidth={2} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me row */}
+            <div className="flex items-center justify-between pt-1 text-[11.5px] font-semibold">
+              <label className="flex items-center gap-2 cursor-pointer group select-none">
+                <div className={`w-[18px] h-[18px] rounded-md flex items-center justify-center border transition-all duration-200 ${rememberMe ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm shadow-emerald-600/20' : 'bg-[#f8fafc] border-slate-200 group-hover:border-emerald-500'}`}>
+                  {rememberMe && <Check size={11} className="stroke-[3]" />}
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="hidden" 
+                  checked={rememberMe}
+                  onChange={() => setRememberMe(!rememberMe)}
+                />
+                <span className="text-slate-600 group-hover:text-slate-800 transition-colors">আমাকে মনে রাখুন</span>
+              </label>
+              
+              <button type="button" className="text-emerald-700 hover:text-emerald-800 hover:underline transition-colors focus:outline-none">
+                পাসওয়ার্ড ভুলে গেছেন?
+              </button>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-700/25 active:scale-[0.98] transition-all cursor-pointer duration-200"
+            >
+              <LogIn size={16} strokeWidth={2.5} />
+              লগিন
+            </button>
+
+            {/* Direct Bypass Button for easy entry */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsAuthenticated(true);
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('urbor_admin_auth', 'true');
+                }
+                setError('');
+              }}
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer duration-200 mt-2"
+            >
+              🔓 সরাসরি ড্যাশবোর্ডে প্রবেশ করুন (Bypass Login)
+            </button>
+          </form>
+
+          {/* Back to store link */}
+          <button 
+            onClick={handleLogoutClick}
+            className="mt-6 text-sm font-medium text-slate-500 hover:text-emerald-700 transition-all duration-200 flex items-center justify-center gap-1.5 mx-auto group"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+            স্টোরে ফিরে যান
+          </button>
+        </div>
+      </div>
+    );
