@@ -2,7 +2,6 @@ import { MapPin, Phone, Mail, Facebook, Instagram, Twitter, Linkedin, MessageCir
 import { useUI } from '../../context/UIContext';
 
 export default function Footer() {
-  const { setIsOrderTrackingOpen } = useUI();
 
   return (
     <footer className="bg-white border-t border-gray-100 text-slate-800 pt-16">
@@ -78,11 +77,11 @@ export default function Footer() {
                 <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-bold text-gray-500">
                    <div className="flex items-center gap-1.5">
                        <Phone size={14} className="text-gray-400" />
-                       <span>ফোন: 01XXXXXXXXX</span>
+                       <span>ফোন: 01335-273946</span>
                    </div>
                    <div className="flex items-center gap-1.5">
                        <MessageCircle size={14} className="text-gray-400" />
-                       <span>হোয়াটসঅ্যাপ: 01XXXXXXXXX</span>
+                       <span>হোয়াটসঅ্যাপ: 01335-273946</span>
                    </div>
                    <div className="flex items-center gap-1.5">
                        <Clock size={14} className="text-gray-400" />
@@ -91,7 +90,7 @@ export default function Footer() {
                 </div>
             </div>
             
-            <a href="https://wa.me/8801XXXXXXXXX" target="_blank" rel="noopener noreferrer" className="bg-[#128c7e] hover:bg-[#075e54] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors shadow-sm">
+            <a href="https://wa.me/8801335273946" target="_blank" rel="noopener noreferrer" className="bg-[#128c7e] hover:bg-[#075e54] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors shadow-sm">
                 <span className="text-[11px] font-bold">আমাদের সাথে চ্যাট করুন</span>
                 <MessageCircle size={14} />
             </a>

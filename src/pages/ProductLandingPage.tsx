@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { ArrowLeft, ShieldCheck, Truck, RefreshCw, CheckCircle2, ChevronRight, MapPin, Phone, User, AlertCircle, ShoppingBag, Star, Info, Lock, ThumbsUp, Copy, Check, ChevronLeft, Plus, Minus } from 'lucide-react';
 import { toBanglaNumber } from '../utils/banglaHelpers';
 import ImageLoader from '../components/ui/ImageLoader';
+import { motion } from 'motion/react';
 
 interface ProductLandingPageProps {
   productId?: string;
@@ -221,7 +222,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                 <div className="flex items-center gap-1 text-amber-500 font-bold text-[13px]">
                   <Star size={16} className="fill-current" />
                   <span className="mt-0.5 text-slate-700">{toBanglaNumber(product.rating || 5.0)}</span>
-                  <span className="text-slate-400 font-medium ml-1 bn-safe">(৪২০+)</span>
+                  <span className="text-slate-400 font-medium ml-1">(৪২০+)</span>
                 </div>
               </div>
 
@@ -230,7 +231,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
               </h1>
               
               <div className="flex items-center gap-2 text-[16px] font-bold text-slate-600 mt-[-8px]">
-                 পরিমাণ: <span className="text-emerald-700 bn-safe ">&nbsp;{product.weight}</span>
+                 পরিমাণ: <span className="text-emerald-700">{product.weight}</span>
               </div>
 
               <div className="flex flex-wrap items-baseline gap-3 mt-2">
@@ -324,7 +325,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                   <div className="flex items-center justify-between mb-6 pb-6 border-b border-slate-100">
                     <div>
                       <span className="block text-[15px] font-bold text-slate-800 mb-1">পরিমাণ নির্ধারণ করুন</span>
-                      <span className="text-[13px] text-slate-500 font-medium bn-safe ">&nbsp;{product.weight} এর প্যাকেজ</span>
+                      <span className="inline-block text-[13px] text-slate-500 font-medium pl-1">{product.weight} এর প্যাকেজ</span>
                     </div>
                     <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
                       <button 
@@ -354,11 +355,22 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                       </div>
                     )}
                     
-                    <div className="space-y-2">
-                      <label className="block text-[15px] font-bold text-slate-800">
+                    <motion.div 
+                      className="space-y-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                      <motion.label 
+                        className="block text-[15px] font-bold text-slate-800 flex items-center gap-2"
+                        animate={{ color: ['#1e293b', '#059669', '#1e293b'] }}
+                        transition={{ repeat: Infinity, duration: 3 }}
+                      >
                         আপনার নাম <span className="text-rose-500">*</span>
-                      </label>
-                      <input 
+                      </motion.label>
+                      <motion.input 
+                        whileFocus={{ scale: 1.02 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
                         type="text" 
                         required
                         value={customerName}
@@ -366,7 +378,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                         placeholder="আপনার পুরো নাম লিখুন"
                         className="w-full px-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-[15px] font-medium text-slate-900 placeholder:text-slate-400"
                       />
-                    </div>
+                    </motion.div>
                     
                     <div className="space-y-2">
                       <label className="block text-[15px] font-bold text-slate-800">

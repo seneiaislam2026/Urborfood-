@@ -1,6 +1,6 @@
 import { toBanglaNumber } from "../../utils/banglaHelpers";
 import React, { useState } from 'react';
-import { X, Search, Printer, Download, ShoppingCart, Filter, Eye } from 'lucide-react';
+import { X, Search, ShoppingCart, Filter, Eye } from 'lucide-react';
 import { useUI } from '../../context/UIContext';
 import { useCart } from '../../context/CartContext';
 
@@ -22,34 +22,6 @@ export default function PriceListModal() {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownloadCSV = () => {
-    // Standard BOM for proper formatting in Excel (especially with Bangla text)
-    const BOM = '\uFEFF';
-    const csvHeaders = 'পণ্য আইডি,পণ্যের নাম,ক্যাটাগরি,ওজন,নিয়মিত মূল্য (৳),বর্তমান মূল্য (৳)\n';
-    
-    const csvRows = filteredProducts.map(product => {
-      const name = product.name.replace(/"/g, '""');
-      const category = product.category.replace(/"/g, '""');
-      const weight = product.weight.replace(/"/g, '""');
-      const regPrice = product.originalPrice;
-      const currentPrice = product.discountedPrice || product.originalPrice;
-      return `"${product.id}","${name}","${category}","${weight}",${regPrice},${currentPrice}`;
-    }).join('\n');
-    
-    const blob = new Blob([BOM + csvHeaders + csvRows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Urbor_Food_Price_List_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const copyPriceText = (product: any) => {
     const text = `${product.name} (${product.weight}) - মূল্য: ৳${product.discountedPrice || product.originalPrice}`;
@@ -123,22 +95,6 @@ export default function PriceListModal() {
               </select>
               <Filter className="absolute right-3 top-3 text-slate-400 pointer-events-none" size={14} />
             </div>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex gap-2 justify-end">
-            <button 
-              onClick={handlePrint}
-              className="flex items-center justify-center gap-1.5 bg-sky-50 border border-sky-100 hover:bg-sky-100 text-sky-700 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
-            >
-              <Printer size={14} /> প্রিন্ট করুন
-            </button>
-            <button 
-              onClick={handleDownloadCSV}
-              className="flex items-center justify-center gap-1.5 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
-            >
-              <Download size={14} /> ডাউনলোড (CSV)
-            </button>
           </div>
         </div>
 

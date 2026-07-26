@@ -6,7 +6,7 @@ import { useUI } from '../../context/UIContext';
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount, setIsCartOpen } = useCart();
-  const { setActiveCategory, setIsOrderTrackingOpen } = useUI();
+  const { setActiveCategory, setIsOrderTrackingOpen, setIsPriceListOpen } = useUI();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
   const [customerName, setCustomerName] = useState('');
@@ -35,8 +35,10 @@ export default function Header() {
     { name: 'হোম', action: () => { window.location.hash = ''; setActiveCategory(null); setIsMobileMenuOpen(false); } },
     { name: 'শপ', action: () => { window.location.hash = ''; setActiveCategory(null); setIsMobileMenuOpen(false); } },
     { name: 'ক্যাটাগরি', action: () => { window.location.hash = ''; setIsMobileMenuOpen(false); } },
+    { name: 'মূল্য তালিকা', action: () => { setIsPriceListOpen(true); setIsMobileMenuOpen(false); } },
     { name: 'আমাদের সম্পর্কে', action: () => setIsMobileMenuOpen(false) },
     { name: 'যোগাযোগ', action: () => setIsMobileMenuOpen(false) },
+    { name: 'আমার অর্ডার', action: () => { setIsOrderTrackingOpen(true); setIsMobileMenuOpen(false); } },
   ];
 
   return (
@@ -114,7 +116,7 @@ export default function Header() {
           <div className="absolute top-0 right-0 bottom-0 w-[280px] sm:w-[320px] bg-white shadow-2xl flex flex-col translate-x-0 animate-in slide-in-from-right duration-300">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src="/logo.jpg" alt="Urbor Food Logo" className="h-9 w-9 object-contain mix-blend-multiply" />
+                <img src={logoUrl} alt="Urbor Food Logo" className="h-9 w-9 object-contain mix-blend-multiply" />
                 <div className="flex items-center text-xl font-black tracking-tight mt-0.5 ">
                   <span className="text-[#F68B1F]">Urbor</span>
                   <span className="text-[#0B6B3A] ml-1.5">Food</span>
