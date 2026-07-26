@@ -172,7 +172,7 @@ export default function LoginPage() {
 
           {isLogin && (
             <div className="flex justify-end pt-1 pb-1">
-              <button type="button" onClick={() => alert('পাসওয়ার্ড পুনরুদ্ধারের জন্য অ্যাডমিনের সাথে যোগাযোগ করুন।')} className="text-[13px] font-bold text-[#034D35] hover:text-[#023b28] transition-colors cursor-pointer">
+              <button type="button" onClick={() => setErrorMsg('পাসওয়ার্ড পুনরুদ্ধারের জন্য অ্যাডমিনের সাথে যোগাযোগ করুন।')} className="text-[13px] font-bold text-[#034D35] hover:text-[#023b28] transition-colors cursor-pointer">
                 পাসওয়ার্ড ভুলে গেছেন?
               </button>
             </div>
@@ -197,7 +197,7 @@ export default function LoginPage() {
 
                 <button 
                   type="button" 
-                  onClick={() => alert('ওটিপি সিস্টেম শীঘ্রই যুক্ত করা হবে।')}
+                  onClick={() => setErrorMsg('ওটিপি সিস্টেম শীঘ্রই যুক্ত করা হবে।')}
                   className="w-full bg-white border-2 border-[#034D35] text-[#034D35] py-3.5 rounded-2xl font-bold text-[15px] hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <ShieldCheck size={18} />

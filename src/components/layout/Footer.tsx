@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="bg-white border-t border-gray-100 text-slate-800 pt-16">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Top Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-10">
           {/* Brand Col */}
           <div>
             <div className="flex items-center gap-1.5 mb-4">
@@ -37,16 +37,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links Col */}
-          <div>
-            <h3 className="text-[13px] font-black text-gray-800 mb-4">দ্রুত লিংক</h3>
-            <ul className="space-y-2.5 text-[11px] font-bold text-gray-500">
-              <li><a href="#" className="hover:text-[#00a651] transition-colors">সব পণ্য</a></li>
-              <li><a href="#" className="hover:text-[#00a651] transition-colors">মুরগি</a></li>
-              <li><a href="#" className="hover:text-[#00a651] transition-colors">মাছ</a></li>
-              <li><a href="#" className="hover:text-[#00a651] transition-colors">সবজি</a></li>
-            </ul>
-          </div>
 
           {/* Support Col */}
           <div>

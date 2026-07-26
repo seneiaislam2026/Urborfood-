@@ -32,13 +32,11 @@ export default function Header() {
   }, []);
 
   const navLinks = [
-    { name: 'হোম', action: () => { window.location.hash = ''; setActiveCategory(null); setIsMobileMenuOpen(false); } },
+    { name: '📦 আমার অর্ডার', action: () => { setIsOrderTrackingOpen(true); setIsMobileMenuOpen(false); } },
+    { name: '📋 মূল্য তালিকা', action: () => { setIsPriceListOpen(true); setIsMobileMenuOpen(false); } },
     { name: 'শপ', action: () => { window.location.hash = ''; setActiveCategory(null); setIsMobileMenuOpen(false); } },
     { name: 'ক্যাটাগরি', action: () => { window.location.hash = ''; setIsMobileMenuOpen(false); } },
-    { name: 'মূল্য তালিকা', action: () => { setIsPriceListOpen(true); setIsMobileMenuOpen(false); } },
     { name: 'আমাদের সম্পর্কে', action: () => setIsMobileMenuOpen(false) },
-    { name: 'যোগাযোগ', action: () => setIsMobileMenuOpen(false) },
-    { name: 'আমার অর্ডার', action: () => { setIsOrderTrackingOpen(true); setIsMobileMenuOpen(false); } },
   ];
 
   return (

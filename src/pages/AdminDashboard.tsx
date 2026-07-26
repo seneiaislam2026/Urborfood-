@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUI } from '../context/UIContext';
+import { updatePWAIcon } from '../pwa-icon';
 import { 
   Send, Package, Leaf, 
   ShoppingBag, 
@@ -1051,21 +1052,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     {showPassword ? <Eye size={18} strokeWidth={2.5} /> : <EyeOff size={18} strokeWidth={2.5} />}
                   </button>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer group select-none relative">
-                  <input 
-                    type="checkbox" 
-                    className="peer sr-only"
-                    checked={rememberMe}
-                    onChange={() => setRememberMe(!rememberMe)}
-                  />
-                  <div className="w-5 h-5 rounded-[6px] border-2 border-slate-300 peer-checked:border-emerald-600 peer-checked:bg-emerald-600 flex items-center justify-center transition-all group-hover:border-emerald-500">
-                    <Check size={12} className="text-white opacity-0 peer-checked:opacity-100 stroke-[3]" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">আমাকে মনে রাখুন</span>
-                </label>
               </div>
 
               <div className="pt-2">
@@ -3874,6 +3860,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           const base64 = reader.result as string;
                           setLogoUrl(base64);
                           localStorage.setItem('urbor_logo_url', base64);
+                          updatePWAIcon();
                         };
                         reader.readAsDataURL(file);
                       }
