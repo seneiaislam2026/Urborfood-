@@ -3003,7 +3003,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   
                   {/* Left Column: Transaction Ledger History */}
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm lg:col-span-8 flex flex-col min-w-0 overflow-hidden">
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm lg:col-span-8 flex flex-col min-w-0 overflow-hidden order-2 lg:order-1">
                     <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gradient-to-r from-white to-slate-50/50">
                       <div className="flex items-center gap-2.5">
                         <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100/50">
@@ -3122,7 +3122,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
 
                   {/* Right Column: Add Transaction Form */}
-                  <div className="lg:col-span-4 space-y-6">
+                  <div className="lg:col-span-4 space-y-6 order-1 lg:order-2">
                     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
@@ -3163,7 +3163,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <div>
                           <label className="block text-[10px] text-slate-500 font-semibold uppercase mb-1.5">খাত / ক্যাটাগরি</label>
                           
-<select value={txCategory} onChange={(e) => setTxCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors cursor-pointer"><option value="পণ্য বিক্রি">পণ্য বিক্রি</option><option value="ডেলিভারি চার্জ">ডেলিভারি চার্জ</option><option value="বিজ্ঞাপন">বিজ্ঞাপন</option><option value="বেতন">বেতন</option><option value="অন্যান্য">অন্যান্য</option></select>
+<input type="text" value={txCategory} onChange={(e) => setTxCategory(e.target.value)} placeholder={txType === 'income' ? 'যেমন: পণ্য বিক্রি, বিনিয়োগ' : 'যেমন: কাঁচামাল কেনা, ডেলিভারি চার্জ'} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors" required />
 
                         </div>
 

@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import { ArrowLeft, ShieldCheck, Truck, RefreshCw, CheckCircle2, ChevronRight, MapPin, Phone, User, AlertCircle, ShoppingBag, Star, Info, Lock, ThumbsUp, Copy, Check, ChevronLeft, Plus, Minus } from 'lucide-react';
 import { toBanglaNumber } from '../utils/banglaHelpers';
 import ImageLoader from '../components/ui/ImageLoader';
-import { motion } from 'motion/react';
+
 
 interface ProductLandingPageProps {
   productId?: string;
@@ -13,7 +13,7 @@ interface ProductLandingPageProps {
 
 export default function ProductLandingPage({ productId, onBack }: ProductLandingPageProps) {
   const { selectedProduct, setSelectedProduct } = useUI();
-  const { products, addToCart, placeOrder, clearCart, orders, reviews, addReview } = useCart();
+  const { products, addToCart, placeOrder, clearCart, orders, reviews, addReview, isLoadingProducts } = useCart();
   
   const product = productId 
     ? products.find(p => p.id === productId) 
@@ -81,12 +81,25 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
       },
       { threshold: 0.1 }
     );
-    const formEl = document.getElementById('checkout-form');
+    const formEl = document.getElementById('checkout-form-section');
     if (formEl) {
       observer.observe(formEl);
     }
     return () => observer.disconnect();
-  }, []);
+  }, [product, isLoadingProducts, orderSuccess]);
+
+  if (!product && isLoadingProducts) return (
+    <div className="min-h-screen bg-slate-50 animate-pulse p-4 md:p-8">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-slate-200 rounded-2xl aspect-square"></div>
+        <div className="space-y-4 pt-4">
+          <div className="h-10 bg-slate-200 rounded w-3/4"></div>
+          <div className="h-6 bg-slate-200 rounded w-1/4"></div>
+          <div className="h-24 bg-slate-200 rounded w-full mt-8"></div>
+        </div>
+      </div>
+    </div>
+  );
 
   if (!product) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -375,7 +388,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                   </div>
 
                   {/* Form */}
-                  <form onSubmit={handleCheckoutSubmit} className="space-y-5">
+                  <form id="checkout-form-section" onSubmit={handleCheckoutSubmit} className="space-y-5">
                     {formError && (
                       <div className="bg-rose-50 text-rose-600 p-4 rounded-xl text-[14px] font-bold flex items-start gap-3 border border-rose-100 animate-in slide-in-from-top-2">
                         <AlertCircle size={18} className="mt-0.5 shrink-0" />
@@ -383,20 +396,20 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                       </div>
                     )}
                     
-                    <motion.div 
+                    <div 
                       className="space-y-2"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5, delay: 0.2 }}
                     >
-                      <motion.label 
+                      <label 
                         className="block text-[15px] font-bold text-slate-800 flex items-center gap-2"
                         animate={{ color: ['#1e293b', '#059669', '#1e293b'] }}
                         transition={{ repeat: Infinity, duration: 3 }}
                       >
                         আপনার নাম <span className="text-rose-500">*</span>
-                      </motion.label>
-                      <motion.input 
+                      </label>
+                      <input 
                         whileFocus={{ scale: 1.02 }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                         type="text" 
@@ -406,7 +419,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                         placeholder="আপনার পুরো নাম লিখুন"
                         className="w-full px-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-[15px] font-medium text-slate-900 placeholder:text-slate-400"
                       />
-                    </motion.div>
+                    </div>
                     
                     <div className="space-y-2">
                       <label className="block text-[15px] font-bold text-slate-800">
@@ -464,6 +477,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
 
                     <div className="pt-2">
                       <button 
+                        id="submit-order-btn"
                         type="submit"
                         disabled={isSubmitting}
                         className="w-full bg-[#f97316] hover:bg-[#ea580c] text-white py-4 rounded-full font-bold text-[17px] shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"

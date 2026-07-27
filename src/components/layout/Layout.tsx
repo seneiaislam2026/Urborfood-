@@ -10,10 +10,10 @@ import TopBannerNotification from '../ui/TopBannerNotification';
 import MyOrdersModal from '../ui/MyOrdersModal';
 import { MessageCircle, Loader2 } from 'lucide-react';
 
+import HomePage from '../../pages/HomePage';
+import ProductLandingPage from '../../pages/ProductLandingPage';
 // Lazy loaded pages for performance
-const HomePage = lazy(() => import('../../pages/HomePage'));
 const AdminDashboard = lazy(() => import('../../pages/AdminDashboard'));
-const ProductLandingPage = lazy(() => import('../../pages/ProductLandingPage'));
 const LoginPage = lazy(() => import('../../pages/LoginPage'));
 
 export default function Layout() {
@@ -115,19 +115,15 @@ export default function Layout() {
           </Suspense>
         </>
       ) : currentView === 'landing' && landingProductId ? (
-        <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-white"><Loader2 className="w-8 h-8 text-emerald-600 animate-spin" /></div>}>
-          <ProductLandingPage 
+        <ProductLandingPage 
             productId={landingProductId} 
             onBack={() => { window.location.hash = ''; }} 
           />
-        </Suspense>
       ) : (
         <>
           <Header />
           <main className="flex-1">
-            <Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center bg-white"><Loader2 className="w-8 h-8 text-emerald-600 animate-spin" /></div>}>
-              <HomePage />
-            </Suspense>
+            <HomePage />
           </main>
           <Footer />
           <CartDrawer />

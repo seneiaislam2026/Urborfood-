@@ -4,7 +4,7 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocs, query, where }
 
 import { Product, Review } from '../types';
 import { toBanglaNumber } from '../utils/banglaHelpers';
-import { mockProducts } from '../data/mock';
+import { mockProducts, mockReviews } from '../data/mock';
 
 
 export interface CartItem extends Product {
@@ -63,6 +63,7 @@ interface CartContextType {
 
   // Stateful Products management
   products: Product[];
+  isLoadingProducts: boolean;
   addProduct: (product: Omit<Product, 'id' | 'rating' | 'reviews'>) => void;
   updateProduct: (product: Product) => void;
   reviews: Review[];
@@ -243,7 +244,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(mockProducts.map(p => ({ ...p, stock: 20, lowStockAlert: 5 })));
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   
@@ -275,16 +277,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const unsubProducts = onSnapshot(doc(db, 'appData', 'products'), (docSnap) => {
       if (docSnap.exists()) {
         setProducts(docSnap.data().data);
+        setIsLoadingProducts(false);
       } else {
         // Init mock
-        import('../data/mock').then(({ mockProducts }) => {
-            const initial = mockProducts.map(p => ({ ...p, stock: 20, lowStockAlert: 5 }));
-            setProducts(initial);
-            setDoc(doc(db, 'appData', 'products'), { data: initial });
-        });
+        const initial = mockProducts.map(p => ({ ...p, stock: 20, lowStockAlert: 5 }));
+        setProducts(initial);
+        setDoc(doc(db, 'appData', 'products'), { data: initial });
+        setIsLoadingProducts(false);
       }
     });
-
     const unsubOrders = onSnapshot(doc(db, 'appData', 'orders'), (docSnap) => {
       if (docSnap.exists()) {
         setOrders(docSnap.data().data);
@@ -304,10 +305,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (docSnap.exists()) {
         setReviews(docSnap.data().data);
       } else {
-        import("../data/mock").then(({ mockReviews }) => {
-          setReviews(mockReviews);
-          setDoc(doc(db, "appData", "reviews"), { data: mockReviews });
-        });
+        setReviews(mockReviews);
+        setDoc(doc(db, "appData", "reviews"), { data: mockReviews });
       }
     });
 
@@ -714,7 +713,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       placeDirectOrder,
       updateOrderStatus,
       deleteOrder,
-      products,
+      products, isLoadingProducts,
       addProduct,
       updateProduct,
       deleteProduct,

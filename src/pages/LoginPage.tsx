@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, User, Lock, ArrowLeft, Phone, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -73,11 +73,7 @@ export default function LoginPage() {
         হোম পেজ
       </button>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-[440px] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 sm:p-10 relative z-10"
+      <div className="w-full max-w-[440px] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 sm:p-10 relative z-10"
       >
         <div className="flex flex-col items-center text-center mb-8">
           <div className="w-20 h-20 rounded-full border-4 border-emerald-50 p-1 mb-5 flex items-center justify-center bg-white shadow-sm overflow-hidden">
@@ -141,13 +137,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <AnimatePresence mode="wait">
+          
             {!isLogin && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-1.5 overflow-hidden"
+              <div className="space-y-1.5 overflow-hidden"
               >
                 <label className="text-[13px] font-bold text-slate-700 block">পাসওয়ার্ড নিশ্চিত করুন</label>
                 <div className="relative group">
@@ -166,9 +158,9 @@ export default function LoginPage() {
                         {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          
 
           {isLogin && (
             <div className="flex justify-end pt-1 pb-1">
@@ -218,7 +210,7 @@ export default function LoginPage() {
         >
           অ্যাডমিন
         </button>
-      </motion.div>
+      </div>
     </div>
   );
 }
