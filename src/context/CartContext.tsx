@@ -2,9 +2,10 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
 
-import { Product } from '../types';
+import { Product, Review } from '../types';
 import { toBanglaNumber } from '../utils/banglaHelpers';
 import { mockProducts } from '../data/mock';
+
 
 export interface CartItem extends Product {
   quantity: number;
@@ -26,6 +27,8 @@ export interface Order {
   total: number;
   date: string;
   status: 'Pending' | 'Confirmed' | 'Shipped' | 'Completed' | 'Cancelled';
+  salesman?: string;
+  source?: 'website' | 'facebook' | 'whatsapp' | 'shop';
 }
 
 export interface AppNotification {
@@ -62,6 +65,9 @@ interface CartContextType {
   products: Product[];
   addProduct: (product: Omit<Product, 'id' | 'rating' | 'reviews'>) => void;
   updateProduct: (product: Product) => void;
+  reviews: Review[];
+  addReview: (review: Omit<Review, "id" | "date">) => void;
+  deleteReview: (id: string) => void;
   deleteProduct: (id: string) => void;
 
   // Notifications Interface
@@ -75,7 +81,7 @@ interface CartContextType {
   triggerSound: () => void;
   desktopPermission: string;
   requestDesktopPermission: () => Promise<string>;
-  addSimulatedOrder: (order: Order) => void;
+  addSimulatedOrder: (order: Order, silent?: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -238,6 +244,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   
   // Custom Cart Toast state for beautiful feedback when adding items
@@ -293,11 +300,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setNotifications([]);
       }
     });
+    const unsubReviews = onSnapshot(doc(db, "appData", "reviews"), (docSnap) => {
+      if (docSnap.exists()) {
+        setReviews(docSnap.data().data);
+      } else {
+        import("../data/mock").then(({ mockReviews }) => {
+          setReviews(mockReviews);
+          setDoc(doc(db, "appData", "reviews"), { data: mockReviews });
+        });
+      }
+    });
 
     return () => {
       unsubProducts();
       unsubOrders();
       unsubNotifications();
+      unsubReviews();
     };
   }, []);
 
@@ -321,7 +339,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Persist notifications
   useEffect(() => {
     if (isClient) {
-      setDoc(doc(db, 'appData', 'notifications'), { data: notifications });
+      // Use setTimeout to run this outside the pure render/update phase and stringify to remove undefined
+      setTimeout(() => {
+        setDoc(doc(db, 'appData', 'notifications'), { data: JSON.parse(JSON.stringify(notifications)) }).catch(console.error);
+      }, 0);
     }
   }, [notifications]);
 
@@ -586,8 +607,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setProducts(prev => {
       const current = prev || [];
       const updated = current.map(p => p.id === updatedProd.id ? updatedProd : p);
+      
+      // Safe async side-effect outside the pure updater phase
       if (isClient) {
-        setDoc(doc(db, 'appData', 'products'), { data: JSON.parse(JSON.stringify(updated)) });
+        setTimeout(() => {
+          setDoc(doc(db, 'appData', 'products'), { data: JSON.parse(JSON.stringify(updated)) }).catch(console.error);
+        }, 0);
+      }
+      return updated;
+    });
+  };
+
+  const addReview = (review: Omit<Review, "id" | "date">) => {
+    setReviews(prev => {
+      const current = prev || [];
+      const newReview: Review = {
+        ...review,
+        id: Math.random().toString(36).substring(2, 9),
+        date: new Date().toLocaleDateString("bn-BD", { day: "numeric", month: "long", year: "numeric" }),
+      };
+      const updated = [newReview, ...current];
+      if (isClient) {
+        setDoc(doc(db, "appData", "reviews"), { data: JSON.parse(JSON.stringify(updated)) });
+      }
+      return updated;
+    });
+  };
+
+  const deleteReview = (id: string) => {
+    setReviews(prev => {
+      const current = prev || [];
+      const updated = current.filter(r => r.id !== id);
+      if (isClient) {
+        setDoc(doc(db, "appData", "reviews"), { data: JSON.parse(JSON.stringify(updated)) });
       }
       return updated;
     });
@@ -605,15 +657,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   // Add a simulated mock order for admin notification tests
-  const addSimulatedOrder = (simulatedOrder: Order) => {
+  const addSimulatedOrder = (simulatedOrder: Order, silent: boolean = false) => {
     setOrders(prev => {
       const updated = [simulatedOrder, ...prev];
       if (isClient) {
-        setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) });
+        setTimeout(() => {
+          setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) }).catch(console.error);
+        }, 0);
       }
       return updated;
     });
-    triggerOrderNotification(simulatedOrder);
+    if (!silent) triggerOrderNotification(simulatedOrder);
   };
 
   // Notification management functions
@@ -664,6 +718,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       addProduct,
       updateProduct,
       deleteProduct,
+      reviews,
+      addReview,
+      deleteReview,
       notifications,
       addNotification,
       dismissNotification,

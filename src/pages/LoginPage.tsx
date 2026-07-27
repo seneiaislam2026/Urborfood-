@@ -186,25 +186,6 @@ export default function LoginPage() {
               {isLogin ? 'লগইন করুন' : 'একাউন্ট তৈরি করুন'}
               <ArrowRight size={18} />
             </button>
-            
-            {isLogin && (
-              <>
-                <div className="flex items-center gap-3 my-6">
-                  <div className="h-px bg-slate-200 flex-1"></div>
-                  <span className="text-slate-400 font-medium text-sm">অথবা</span>
-                  <div className="h-px bg-slate-200 flex-1"></div>
-                </div>
-
-                <button 
-                  type="button" 
-                  onClick={() => setErrorMsg('ওটিপি সিস্টেম শীঘ্রই যুক্ত করা হবে।')}
-                  className="w-full bg-white border-2 border-[#034D35] text-[#034D35] py-3.5 rounded-2xl font-bold text-[15px] hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <ShieldCheck size={18} />
-                  ওটিপি দিয়ে লগইন করুন
-                </button>
-              </>
-            )}
           </div>
         </form>
 

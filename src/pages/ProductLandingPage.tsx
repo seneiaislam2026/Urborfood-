@@ -13,12 +13,12 @@ interface ProductLandingPageProps {
 
 export default function ProductLandingPage({ productId, onBack }: ProductLandingPageProps) {
   const { selectedProduct, setSelectedProduct } = useUI();
-  const { products, addToCart, placeOrder, clearCart, orders } = useCart();
+  const { products, addToCart, placeOrder, clearCart, orders, reviews, addReview } = useCart();
   
   const product = productId 
     ? products.find(p => p.id === productId) 
     : selectedProduct;
-  
+    
   const [quantity, setQuantity] = useState(1);
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
@@ -29,6 +29,34 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
   const [successTrackingId, setSuccessTrackingId] = useState('');
   const [copied, setCopied] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);
+
+  const [reviewName, setReviewName] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!reviewName || !reviewComment) return;
+    setIsSubmittingReview(true);
+    try {
+      addReview({
+        customerName: reviewName,
+        rating: reviewRating,
+        comment: reviewComment
+      });
+      setReviewSuccess(true);
+      setReviewName('');
+      setReviewComment('');
+      setReviewRating(5);
+      setTimeout(() => setReviewSuccess(false), 3000);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
 
   // Auto-fill existing customer details if phone matches
@@ -335,7 +363,7 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                       >
                         <Minus size={18} strokeWidth={2.5} />
                       </button>
-                      <span className="w-8 text-center font-bold text-slate-900 text-[16px]">{toBanglaNumber(quantity)}</span>
+                      <span className="w-8 text-center font-bold font-noto text-slate-900 text-[16px]">{toBanglaNumber(quantity)}</span>
                       <button 
                         type="button"
                         onClick={() => setQuantity(quantity + 1)}
@@ -451,6 +479,55 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Reviews Section */}
+      <div className="max-w-[1100px] mx-auto px-4 sm:px-5 pb-16">
+        <div className="bg-white rounded-[24px] p-6 sm:p-8 md:p-10 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-slate-200/60">
+          <div className="flex flex-col md:flex-row gap-12">
+            
+            {/* Reviews List */}
+            <div className="flex-1 space-y-8">
+              <div>
+                <h3 className="text-[20px] font-bold text-slate-800 tracking-tight mb-1">কাস্টমার রিভিউ</h3>
+                <p className="text-slate-500 text-sm font-medium">যারা পণ্যটি ব্যবহার করেছেন তাদের মতামত</p>
+              </div>
+              
+              <div className="space-y-6">
+                {reviews.length === 0 ? (
+                  <div className="text-center py-10 bg-slate-50 rounded-2xl border border-slate-100 text-slate-500 font-medium">
+                    এখনও কোনো রিভিউ নেই। প্রথম রিভিউটি আপনিই দিন!
+                  </div>
+                ) : (
+                  reviews.map(review => (
+                    <div key={review.id} className="pb-6 border-b border-slate-100 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg uppercase shrink-0">
+                          {review.customerName.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 text-[15px]">{review.customerName}</h4>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} size={12} className={i < review.rating ? "fill-amber-400 text-amber-400" : "fill-slate-200 text-slate-200"} />
+                              ))}
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-medium">Verified Buyer</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-slate-600 text-[15px] leading-relaxed md:pl-13">
+                        {review.comment}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

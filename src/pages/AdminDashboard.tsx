@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
+import { useReactToPrint } from 'react-to-print';
 import { useUI } from '../context/UIContext';
 import { updatePWAIcon } from '../pwa-icon';
 import { 
@@ -6,7 +8,7 @@ import {
   ShoppingBag, 
   Users, 
   BarChart3, 
-  Settings, 
+  Settings, MessageSquare, Star, 
   LogOut, 
   Search, 
   Plus, 
@@ -56,11 +58,15 @@ import {
   Facebook,
   Phone,
   MapPin,
-  ChevronDown
-, ChevronRight, MonitorSmartphone, CalendarDays, Copy, ExternalLink, Edit3, ShoppingCart, FileText } from 'lucide-react';
+  ChevronDown,
+  Tag
+, ChevronRight, MonitorSmartphone, CalendarDays, Copy, ExternalLink, Edit3, ShoppingCart, FileText, Store } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Product } from '../types';
 import ImageLoader from '../components/ui/ImageLoader';
+import StaffManagement from '../components/admin/StaffManagement';
+import CategoryManagement from '../components/admin/CategoryManagement';
+import { POSInvoicePrint } from '../components/admin/POSInvoicePrint';
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
@@ -69,8 +75,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const navItems = () => [
     { id: 'dashboard', label: t.dashboard, icon: BarChart3 },
     { id: 'products', label: t.productManagement, icon: Package },
+    { id: 'categories', label: 'ক্যাটাগরি', icon: Tag },
     { id: 'product-prices', label: 'পণ্য মূল্য তালিকা', icon: DollarSign },
+    { id: 'product-reviews', label: 'প্রোডাক্ট রিভিও', icon: MessageSquare },
     { id: 'inventory', label: t.inventoryControl, icon: Package },
+    { id: 'create-order', label: 'সেলস / অর্ডার এন্ট্রি', icon: PlusCircle },
     { id: 'orders', label: t.orders, icon: ShoppingBag, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
     { id: 'courier', label: t.courierDashboard, icon: Truck },
     { id: 'customers', label: t.customerList, icon: Users },
@@ -78,6 +87,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: 'dues', label: t.dues, icon: BookOpen },
     { id: 'marketing', label: t.marketing, icon: Megaphone },
     { id: 'landing-page', label: t.landingPage, icon: MonitorSmartphone },
+    { id: 'staff', label: t.staffManagement, icon: UserPlus },
     { id: 'settings', label: t.settings, icon: Settings },
   ];
 
@@ -110,8 +120,22 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   };
 
   // Tab routing
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'product-prices' | 'orders' | 'customers' | 'settings' | 'finances' | 'marketing' | 'dues' | 'inventory' | 'courier' | 'create-order' | 'landing-page'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'categories' | 'product-prices' | 'orders' | 'customers' | 'settings' | 'finances' | 'marketing' | 'dues' | 'inventory' | 'courier' | 'create-order' | 'landing-page' | 'staff'>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [staffList, setStaffList] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedStaff = localStorage.getItem('urbor_staff_list');
+      if (savedStaff) {
+        try {
+          setStaffList(JSON.parse(savedStaff));
+        } catch (e) {
+          console.error('Failed to parse staff list', e);
+        }
+      }
+    }
+  }, []);
 
   // Language translation state
   const [lang, setLang] = useState<'bn' | 'en'>('bn');
@@ -137,6 +161,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       inventoryControl: 'ইনভেন্টরি কন্ট্রোল',
       courierDashboard: 'কুরিয়ার ড্যাশবোর্ড',
       landingPage: 'ল্যান্ডিং পেইজ',
+      staffManagement: 'স্টাফ ম্যানেজমেন্ট',
     },
     en: {
       appName: 'Urbor Food',
@@ -158,6 +183,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       inventoryControl: 'Inventory Control',
       courierDashboard: 'Courier Dashboard',
       landingPage: 'Landing Page',
+      staffManagement: 'Staff Management',
     }
   }[lang];
 
@@ -168,7 +194,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   // Context resources
   const { 
-    products, 
+    products,
+    reviews,
+    addReview,
+    deleteReview, 
     orders, 
     addProduct, 
     updateProduct, 
@@ -188,13 +217,48 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     addSimulatedOrder
   } = useCart();
 
+  // Print Invoice states
+  const printComponentRef = useRef<HTMLDivElement>(null);
+  const [orderToPrint, setOrderToPrint] = useState<any | null>(null);
+  const [newReviewCustomer, setNewReviewCustomer] = useState("");
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState("");
+
+  const a4PrintRef = useRef<HTMLDivElement>(null);
+  const handleA4Print = useReactToPrint({
+    contentRef: a4PrintRef,
+    documentTitle: 'Invoice',
+  });
+  
+  const handlePrint = useReactToPrint({
+    contentRef: printComponentRef,
+    documentTitle: 'Invoice',
+    onAfterPrint: () => setOrderToPrint(null),
+  });
+
+  useEffect(() => {
+    if (orderToPrint) {
+      // Use setTimeout to ensure the DOM has updated and ref is available
+      const timer = setTimeout(() => {
+        try {
+          handlePrint();
+        } catch (err) {
+          console.error("Print failed", err);
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [orderToPrint, handlePrint]);
+
   // Manual Order states
   const [isManualOrderModalOpen, setIsManualOrderModalOpen] = useState(false);
   const [manualOrderCustomerName, setManualOrderCustomerName] = useState('');
   const [manualOrderPhone, setManualOrderPhone] = useState('');
   const [manualOrderAddress, setManualOrderAddress] = useState('');
   const [manualOrderIsDue, setManualOrderIsDue] = useState(false);
-  const [manualOrderSource, setManualOrderSource] = useState<'website' | 'facebook' | 'whatsapp'>('website');
+  const [manualOrderSource, setManualOrderSource] = useState<'shop' | 'website' | 'facebook' | 'whatsapp'>('shop');
+  const [manualOrderSalesman, setManualOrderSalesman] = useState('');
+  const [isSalesmanDropdownOpen, setIsSalesmanDropdownOpen] = useState(false);
   const [savedCustomers, setSavedCustomers] = useState<{ id: string, name: string, phone: string, address: string }[]>([]);
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [newCustName, setNewCustName] = useState('');
@@ -202,6 +266,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [newCustAddress, setNewCustAddress] = useState('');
   const [invoiceToPrint, setInvoiceToPrint] = useState<any | null>(null);
   const [manualOrderItems, setManualOrderItems] = useState<{ id: string; name: string; quantity: number; price: number }[]>([]);
+  const [manualProductSearch, setManualProductSearch] = useState('');
+  const [isManualProductSearchOpen, setIsManualProductSearchOpen] = useState(false);
   const [manualSelectedProductId, setManualSelectedProductId] = useState('');
   const [manualSelectedQuantity, setManualSelectedQuantity] = useState(1);
   const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
@@ -1104,10 +1170,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-slate-800">
-
+    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-slate-800 print:overflow-visible print:h-auto print:block">
+      <div style={{ display: "none" }}>
+        {orderToPrint && (
+          <POSInvoicePrint ref={printComponentRef} order={orderToPrint} adminName={username} />
+        )}
+      </div>
       {/* Primary Sidebar for Large Screens */}
-      <div className="w-[280px] bg-slate-100 hidden md:flex flex-col flex-shrink-0 z-10 border-r border-slate-200/60 overflow-hidden">
+      <div className="w-[280px] bg-slate-100 hidden md:flex flex-col flex-shrink-0 z-10 border-r border-slate-200/60 overflow-hidden print:hidden">
         
         {/* Header Section */}
         <div className="bg-[#0f4d2a] text-white p-6 relative overflow-hidden rounded-b-3xl shadow-lg shrink-0 z-20">
@@ -1352,7 +1422,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 print:hidden">
         
         {/* Header - Highly Optimized and Responsive */}
         <header className="bg-white shadow-sm border-b relative shrink-0">
@@ -1373,12 +1443,15 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   {activeTab === 'dashboard' && 'ড্যাশবোর্ড ওভারভিউ'}
                   {activeTab === 'products' && 'পণ্য ম্যানেজমেন্ট'}
                   {activeTab === 'product-prices' && 'পণ্য মূল্য তালিকা'}
+                  {activeTab === 'product-reviews' && 'প্রোডাক্ট রিভিও'}
                   {activeTab === 'orders' && 'অর্ডার সমূহ'}
+                  {activeTab === 'create-order' && 'সেলস / অর্ডার এন্ট্রি'}
                   {activeTab === 'customers' && 'কাস্টমার ডিরেক্টরি'}
                                     {activeTab === 'finances' && 'আয় ও ব্যয় ট্র্যাকার'}
                   {activeTab === 'dues' && 'বকেয়া হিসাব ও কালেকশন'}
                   {activeTab === 'marketing' && 'মার্কেটিং ও ডিসকাউন্ট ইন্টেলিজেন্স'}
                   {activeTab === 'settings' && 'সিস্টেম সেটিংস'}
+                  {activeTab === 'staff' && 'স্টাফ ম্যানেজমেন্ট'}
                 </h1>
                 <p className="text-[10px] md:text-xs text-slate-500 hidden sm:block font-bold mt-0.5">
                   রিয়েল-টাইম অ্যাডমিন অ্যাকশন
@@ -1400,7 +1473,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
                 </div>
               )}
-          {activeTab === 'orders' && (
+              {activeTab === 'orders' && (
                 <div className="relative hidden max-w-xs sm:block">
                   <input 
                     type="text" 
@@ -1412,8 +1485,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
                 </div>
               )}
-
-              {/* User Avatar Badge */}
               <div className="flex items-center gap-2">
                 {/* Notification Dropdown Bell */}
                 <div className="relative shrink-0 mr-1">
@@ -1514,7 +1585,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {/* Dashboard Main Workspace */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc]/50 p-4 md:p-6 pb-24">
           
-          {/* TAB 1: DASHBOARD VIEW */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
               {/* Premium Greeting Header */}
@@ -1523,19 +1593,28 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">ড্যাশবোর্ড ওভারভিউ</h2>
                   <p className="text-sm text-slate-500 font-medium mt-1">আজকের স্ট্যাটাস এবং আপডেট একনজরে</p>
                 </div>
-                <div className="text-xs font-bold text-slate-500 bg-white px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm inline-flex items-center gap-2 w-max">
-                  <CalendarDays size={16} className="text-emerald-500" /> 
-                  {new Date().toLocaleDateString('bn-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                <div className="flex items-center gap-3">
+                  <div className="text-xs font-bold text-slate-500 bg-white px-4 py-2.5 rounded-xl border border-slate-200/60 shadow-sm inline-flex items-center gap-2 w-max">
+                    <CalendarDays size={16} className="text-emerald-500" /> 
+                    {new Date().toLocaleDateString('bn-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('create-order')}
+                    className="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all inline-flex items-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <PlusCircle size={16} /> 
+                    নতুন সেলস এন্ট্রি
+                  </button>
                 </div>
               </div>
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
                 {[
-                  { label: 'মোট বিক্রি', value: `৳${totalSales.toLocaleString('bn-BD')}`, countDesc: 'টাকা', colorBase: 'emerald', icon: BarChart3 },
-                  { label: 'নতুন অর্ডার', value: pendingOrdersCount.toLocaleString('bn-BD'), countDesc: 'টি পেন্ডিং', colorBase: 'orange', icon: ShoppingBag },
-                  { label: 'মোট পণ্য', value: products.length.toLocaleString('bn-BD'), countDesc: 'টি লাইভ', colorBase: 'blue', icon: Package },
-                  { label: 'মোট কাস্টমার', value: totalCustomersCount.toLocaleString('bn-BD'), countDesc: 'জন নিবন্ধিত', colorBase: 'purple', icon: Users },
+                  { label: 'মোট বিক্রি', value: `৳${totalSales.toLocaleString('bn-BD')}`, countDesc: 'টাকা', colorBase: 'emerald', icon: BarChart3, onClick: () => setActiveTab('orders') },
+                  { label: 'নতুন অর্ডার', value: pendingOrdersCount.toLocaleString('bn-BD'), countDesc: 'টি পেন্ডিং', colorBase: 'orange', icon: ShoppingBag, onClick: () => setActiveTab('orders') },
+                  { label: 'মোট পণ্য', value: products.length.toLocaleString('bn-BD'), countDesc: 'টি লাইভ', colorBase: 'blue', icon: Package, onClick: () => setActiveTab('product-prices') },
+                  { label: 'মোট কাস্টমার', value: totalCustomersCount.toLocaleString('bn-BD'), countDesc: 'জন নিবন্ধিত', colorBase: 'purple', icon: Users, onClick: () => setActiveTab('customers') },
                 ].map((stat, i) => {
                   const colors = {
                     emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600', lightBg: 'bg-emerald-50', border: 'border-emerald-100' },
@@ -1545,7 +1624,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   }[stat.colorBase as 'emerald'|'orange'|'blue'|'purple'];
 
                   return (
-                    <div key={i} className="bg-white rounded-[16px] p-4 sm:p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 flex items-center justify-between group">
+                    <div key={i} onClick={stat.onClick} className="bg-white rounded-[16px] p-4 sm:p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 flex items-center justify-between group cursor-pointer">
                       <div className="flex flex-col">
                         <p className="text-[12px] sm:text-[13px] font-semibold text-slate-500 mb-1">{stat.label}</p>
                         <h3 className="text-[20px] sm:text-[24px] font-black text-slate-800 tracking-tight leading-tight mb-2">{stat.value}</h3>
@@ -1559,6 +1638,85 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     </div>
                   )
                 })}
+              </div>
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Sales Chart Section */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-black text-slate-800">গত ৭ দিনের সেলস গ্রাফ</h3>
+                    <p className="text-xs text-slate-500 font-medium">প্রতিদিনের সেলস এর পরিমাণ</p>
+                  </div>
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={(() => {
+                        const data = [];
+                        for(let i=6; i>=0; i--) {
+                            const d = new Date();
+                            d.setDate(d.getDate() - i);
+                            const dateStr = d.toISOString().split('T')[0];
+                            const dayOrders = orders.filter(o => o.date && o.date.startsWith(dateStr) && o.status !== 'Cancelled');
+                            const total = dayOrders.reduce((sum, o) => sum + o.total, 0);
+                            data.push({
+                                name: d.toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' }),
+                                sales: total
+                            });
+                        }
+                        return data;
+                      })()} margin={{ top: 10, right: 10, left: 20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="name" tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                        <YAxis tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} tickFormatter={(value) => `৳ ${value}`} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <RechartsTooltip 
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                          formatter={(value: number) => [`৳ ${value.toLocaleString('bn-BD')}`, 'মোট বিক্রি']}
+                          labelStyle={{ color: '#64748b', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}
+                        />
+                        <Area type="monotone" dataKey="sales" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Sales by Salesman Chart */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-black text-slate-800">সেলসম্যান অনুযায়ী সেলস</h3>
+                    <p className="text-xs text-slate-500 font-medium">প্রতি সেলসম্যানের মোট বিক্রি</p>
+                  </div>
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={(() => {
+                        const salesmanData: Record<string, number> = {};
+                        orders.filter(o => o.status !== 'Cancelled').forEach(o => {
+                            const name = o.salesman || 'ওয়েবসাইট';
+                            salesmanData[name] = (salesmanData[name] || 0) + o.total;
+                        });
+                        return Object.entries(salesmanData)
+                            .map(([name, sales]) => ({ name, sales }))
+                            .sort((a, b) => b.sales - a.sales)
+                            .slice(0, 5); // top 5
+                      })()} margin={{ top: 10, right: 10, left: 20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="name" tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                        <YAxis tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} tickFormatter={(value) => `৳ ${value}`} />
+                        <RechartsTooltip 
+                          cursor={{ fill: 'transparent' }}
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                          formatter={(value: number) => [`৳ ${value.toLocaleString('bn-BD')}`, 'মোট বিক্রি']}
+                          labelStyle={{ color: '#64748b', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}
+                        />
+                        <Bar dataKey="sales" fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </div>
 
               {/* Quick Mobile search */}
@@ -2182,6 +2340,96 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
+          {activeTab === 'product-reviews' && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-w-0">
+              <div className="p-4 md:p-5 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap select-none bg-gradient-to-r from-emerald-50/50 to-white">
+                <div>
+                  <h3 className="font-semibold text-base text-slate-800 flex items-center gap-2">
+                    <MessageSquare className="text-emerald-600" size={18} /> 
+                    প্রোডাক্ট রিভিও
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">নতুন রিভিউ যোগ করুন এবং বিদ্যমান রিভিউগুলো পরিচালনা করুন</p>
+                </div>
+              </div>
+              <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
+                <div className="max-w-3xl">
+                  <h4 className="text-sm font-bold text-slate-800 mb-4">নতুন রিভিউ যোগ করুন</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">গ্রাহকের নাম</label>
+                      <input
+                        type="text"
+                        value={newReviewCustomer}
+                        onChange={e => setNewReviewCustomer(e.target.value)}
+                        placeholder="যেমন: আব্দুর রহমান"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">রেটিং (১-৫)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="5"
+                        value={newReviewRating}
+                        onChange={e => setNewReviewRating(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">রিভিউ মন্তব্য</label>
+                      <textarea
+                        value={newReviewComment}
+                        onChange={e => setNewReviewComment(e.target.value)}
+                        placeholder="রিভিউ লিখুন..."
+                        rows={3}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if(!newReviewCustomer || !newReviewComment) return;
+                      addReview({ customerName: newReviewCustomer, rating: newReviewRating, comment: newReviewComment });
+                      setNewReviewCustomer('');
+                      setNewReviewComment('');
+                      setNewReviewRating(5);
+                    }}
+                    className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2"
+                  >
+                    <Plus size={16} /> রিভিউ যোগ করুন
+                  </button>
+                </div>
+              </div>
+              <div className="p-4 md:p-6">
+                <h4 className="text-sm font-bold text-slate-800 mb-4">বিদ্যমান রিভিউ ({reviews.length})</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {reviews.map(review => (
+                    <div key={review.id} className="p-4 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h5 className="font-bold text-sm text-slate-800">{review.customerName}</h5>
+                          <div className="flex text-amber-400 mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} size={12} className={i < review.rating ? "fill-current" : "text-slate-200"} />
+                            ))}
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => deleteReview(review.id)}
+                          className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <p className="text-sm text-slate-600 italic mb-3">"{review.comment}"</p>
+                      <span className="text-[10px] text-slate-400 mt-auto">{review.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           {activeTab === 'orders' && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-w-0">
               
@@ -2285,6 +2533,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 <div className="text-[11px] text-slate-500 font-mono tracking-wide mt-0.5 truncate">
                                   {order.phone}
                                 </div>
+                                {order.salesman && (
+                                  <div className="text-[10px] text-emerald-600 bg-emerald-50 w-max px-1.5 rounded mt-0.5 font-bold truncate">
+                                    এসআর: {order.salesman}
+                                  </div>
+                                )}
                               </div>
                             </td>
 
@@ -2309,36 +2562,36 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                             {/* Status Selector */}
                             <td className="py-2.5 px-3 align-middle text-center select-none">
-                              <select 
-                                value={order.status}
-                                onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
-                                className={`px-2 py-1 rounded-full text-[11px] font-bold border cursor-pointer focus:outline-none transition-all text-center ${
-                                  isCompleted ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                  isShipped ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                  isConfirmed ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                                  isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                                  'bg-amber-50 text-amber-700 border-amber-200'
-                                }`}
-                              >
-                                <option value="Pending">পেন্ডিং</option>
-                                <option value="Confirmed">প্রস্তুত</option>
-                                <option value="Shipped">হস্তান্তরিত</option>
-                                <option value="Completed">সম্পন্ন</option>
-                                <option value="Cancelled">বাতিল</option>
-                              </select>
+                              
+<select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium outline-none focus:border-slate-900 bg-white cursor-pointer"><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="Confirmed">Confirmed</option><option value="Courier">Courier</option><option value="Delivered">Delivered</option><option value="Cancelled">Cancelled</option><option value="Return">Return</option></select>
+
                             </td>
 
                             {/* Quick Icon Actions */}
                             <td className="py-2.5 px-3 pr-4 align-middle text-center select-none">
                               <div className="flex items-center justify-center gap-1">
                                 <button 
-                                  onClick={() => setSelectedOrder(order)}
+                               onClick={() => setInvoiceToPrint(order)}
+                              className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors shrink-0 flex items-center gap-1"
+                            >
+                              <Printer size={12} /> ইনভয়েস
+                            </button>
+                            <button 
+                               onClick={() => setSelectedOrder(order)}
                                   className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 cursor-pointer"
                                   title="অর্ডার বিবরণ দেখুন"
                                 >
                                   <Eye size={14} />
                                 </button>
                                 
+                                <button 
+                                  onClick={() => setInvoiceToPrint(order)}
+                                  className="p-1.5 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer"
+                                  title="ইনভয়েস প্রিন্ট করুন"
+                                >
+                                  <Printer size={14} />
+                                </button>
+
                                 {!isCompleted && !isCancelled && (
                                   <button 
                                     onClick={() => setBookingOrder(order)}
@@ -2390,9 +2643,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       {/* Customer contact details */}
                       <div>
                         <div className="font-extrabold text-slate-800 text-[15px] leading-normal">{order.customerName}</div>
-                        <div className="text-[12px] text-slate-500 font-bold mt-1">{order.phone}</div>
+                        <div className="text-[12px] text-slate-500 font-bold mt-1 flex items-center justify-between">
+                          <span>{order.phone}</span>
+                          {order.salesman && (
+                            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-bold">এসআর: {order.salesman}</span>
+                          )}
+                        </div>
                       </div>
-
                       {/* Delivery Address */}
                       <div className="text-[12px] text-slate-600 bg-slate-50 py-3 px-4 rounded-xl border border-slate-100 font-bold leading-relaxed">
                         <span className="text-[10px] text-slate-400 block font-bold mb-1 uppercase tracking-wider">ডেলিভারি ঠিকানা:</span>
@@ -2415,7 +2672,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
 
                         {/* Interactive mobile actions */}
-                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar justify-end w-full">
+                        <div className="flex flex-wrap items-center gap-2 justify-end w-full">
                           <button 
                             onClick={() => setSelectedOrder(order)}
                             className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors shrink-0"
@@ -2430,17 +2687,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               <Truck size={12} /> বুকিং
                             </button>
                           )}
-                          <select 
-                            value={order.status}
-                            onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
-                            className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2 py-1.5 text-[11px] cursor-pointer font-bold focus:outline-none max-w-[120px] sm:max-w-[150px] truncate shrink" 
-                          >
-                            <option value="Pending">পেন্ডিং (অর্ডার সফল হয়েছে)</option>
-                            <option value="Confirmed">পণ্য প্রস্তুত করা হচ্ছে</option>
-                            <option value="Shipped">ডেলিভারি পার্টনারের কাছে হস্তান্তরিত</option>
-                            <option value="Completed">ডেলিভারি সম্পন্ন</option>
-                            <option value="Cancelled">বাতিল</option>
-                          </select>
+                          
+<select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold outline-none focus:border-slate-900 bg-[#f8fafc] text-slate-700 w-full cursor-pointer"><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="Confirmed">Confirmed</option><option value="Courier">Courier</option><option value="Delivered">Delivered</option><option value="Cancelled">Cancelled</option><option value="Return">Return</option></select>
+
 
                           <button 
                             onClick={() => { if(confirm('অর্ডার রেকর্ডটি মুছে ফেলতে চান?')) deleteOrder(order.id); }}
@@ -2913,15 +3162,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         {/* Category Select */}
                         <div>
                           <label className="block text-[10px] text-slate-500 font-semibold uppercase mb-1.5">খাত / ক্যাটাগরি</label>
-                          <select 
-                            value={txCategory}
-                            onChange={(e) => setTxCategory(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600 bg-white"
-                          >
-                            {categoriesForType.map(cat => (
-                              <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                          </select>
+                          
+<select value={txCategory} onChange={(e) => setTxCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors cursor-pointer"><option value="পণ্য বিক্রি">পণ্য বিক্রি</option><option value="ডেলিভারি চার্জ">ডেলিভারি চার্জ</option><option value="বিজ্ঞাপন">বিজ্ঞাপন</option><option value="বেতন">বেতন</option><option value="অন্যান্য">অন্যান্য</option></select>
+
                         </div>
 
                         {/* Amount Field */}
@@ -3309,17 +3552,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                         <div>
                           <label className="block text-[9px] text-slate-500 font-medium mb-1">প্ল্যাটফর্ম</label>
-                          <select
-                            value={newCampPlatform}
-                            onChange={(e) => setNewCampPlatform(e.target.value)}
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm font-medium bg-white outline-none focus:border-emerald-600"
-                          >
-                            <option value="Facebook Ads">Facebook Ads</option>
-                            <option value="Instagram Ads">Instagram Ads</option>
-                            <option value="SMS Marketing">SMS Marketing</option>
-                            <option value="Google Search Ads">Google Search Ads</option>
-                            <option value="YouTube Promotion">YouTube Promotion</option>
-                          </select>
+                          
+<select value={newCampPlatform} onChange={(e) => setNewCampPlatform(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-[#f8fafc] focus:bg-white focus:border-emerald-600 transition-colors cursor-pointer"><option value="Facebook Ads">Facebook Ads</option><option value="Google Ads">Google Ads</option><option value="Instagram Ads">Instagram Ads</option><option value="SMS Marketing">SMS Marketing</option><option value="Others">Others</option></select>
+
                         </div>
                         <div>
                           <label className="block text-[9px] text-slate-500 font-medium mb-1">বাজেট (৳) *</label>
@@ -3344,15 +3579,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                         <div>
                           <label className="block text-[9px] text-slate-500 font-medium mb-1">স্ট্যাটাস</label>
-                          <select
-                            value={newCampStatus}
-                            onChange={(e) => setNewCampStatus(e.target.value as any)}
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm font-medium bg-white outline-none focus:border-emerald-600"
-                          >
-                            <option value="Active">Active</option>
-                            <option value="Paused">Paused</option>
-                            <option value="Scheduled">Scheduled</option>
-                          </select>
+                          
+<select value={newCampStatus} onChange={(e) => setNewCampStatus(e.target.value as any)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-[#f8fafc] focus:bg-white focus:border-emerald-600 transition-colors cursor-pointer"><option value="Active">Active</option><option value="Paused">Paused</option><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option></select>
+
                         </div>
                         <div className="col-span-1 sm:col-span-2 md:col-span-3 pt-2">
                           <button
@@ -3435,19 +3664,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                               <div className="pt-2.5 border-t border-slate-200/50 flex items-center justify-between gap-3">
                                 <span className="text-[10px] text-slate-500 font-medium uppercase">স্ট্যাটাস</span>
-                                <select
-                                  value={camp.status}
-                                  onChange={(e) => {
-                                    const newStat = e.target.value as any;
-                                    setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: newStat } : c));
-                                  }}
-                                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold outline-none border border-slate-200 bg-white shadow-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10"
-                                >
-                                  <option value="Active">Active</option>
-                                  <option value="Paused">Paused</option>
-                                  <option value="Scheduled">Scheduled</option>
-                                  <option value="Completed">Completed</option>
-                                </select>
+                                
+<select value={camp.status} onChange={(e) => setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: e.target.value as any } : c))} className="px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium outline-none focus:border-emerald-600 bg-white cursor-pointer"><option value="Active">Active</option><option value="Paused">Paused</option><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option></select>
+
                               </div>
                             </div>
                           ))
@@ -3506,19 +3725,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                   </span>
                                 </td>
                                 <td className="p-3 text-center">
-                                  <select
-                                    value={camp.status}
-                                    onChange={(e) => {
-                                      const newStat = e.target.value as any;
-                                      setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: newStat } : c));
-                                    }}
-                                    className="px-2 py-1 rounded text-[10px] font-bold outline-none border border-slate-200 bg-white"
-                                  >
-                                    <option value="Active">Active</option>
-                                    <option value="Paused">Paused</option>
-                                    <option value="Scheduled">Scheduled</option>
-                                    <option value="Completed">Completed</option>
-                                  </select>
+                                  
+<select value={camp.status} onChange={(e) => setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: e.target.value as any } : c))} className="px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium outline-none focus:border-emerald-600 bg-white cursor-pointer"><option value="Active">Active</option><option value="Paused">Paused</option><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option></select>
+
                                 </td>
                                 <td className="p-3">
                                   <button
@@ -3802,6 +4011,18 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           )}
 
           {/* TAB 5: SYSTEM SETTINGS */}
+          {activeTab === 'staff' && (
+            <div className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-[1600px] mx-auto">
+              <StaffManagement />
+            </div>
+          )}
+
+          {activeTab === 'categories' && (
+            <div className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-[1600px] mx-auto">
+              <CategoryManagement />
+            </div>
+          )}
+
           {activeTab === 'settings' && (
             <div className="max-w-xl bg-white border border-slate-200 shadow-sm rounded-xl p-6 space-y-6">
               
@@ -4001,14 +4222,15 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           items: items,
                           total: totalBill,
                           date: new Date().toISOString(),
-                          status: 'Pending' as const
+                          status: 'Pending' as const,
+                            salesman: manualOrderSalesman
                         };
 
                         addSimulatedOrder(randomMockOrderObj);
                       }}
                       className="bg-emerald-50 hover:bg-emerald-500/20 text-emerald-400 py-2.5 px-4 rounded-xl text-[10px] font-bold border border-emerald-500/20 flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer active:scale-95"
                     >
-                      🚀 নতুন অর্ডার সিমুলেট
+                      নতুন অর্ডার সিমুলেট
                     </button>
                   </div>
                 </div>
@@ -4040,7 +4262,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
-                        <label className="block text-xs text-slate-700 font-bold mb-1.5">কাস্টমার নাম *</label>
+                        <label className="block text-xs text-slate-700 font-bold mb-1.5">কাস্টমার নাম {manualOrderSource !== 'shop' && '*'}</label>
                         <input
                           type="text"
                           value={manualOrderCustomerName}
@@ -4050,7 +4272,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-700 font-bold mb-1.5">মোবাইল নম্বর *</label>
+                        <label className="block text-xs text-slate-700 font-bold mb-1.5">মোবাইল নম্বর {manualOrderSource !== 'shop' && '*'}</label>
                         <input
                           type="text"
                           value={manualOrderPhone}
@@ -4070,7 +4292,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-xs text-slate-700 font-bold mb-1.5">ডেলিভারি ঠিকানা *</label>
+                        <label className="block text-xs text-slate-700 font-bold mb-1.5">ডেলিভারি ঠিকানা {manualOrderSource !== 'shop' && '*'}</label>
                         <textarea
                           rows={2}
                           value={manualOrderAddress}
@@ -4079,12 +4301,22 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 outline-none text-slate-800 placeholder:text-slate-500 resize-none transition-colors"
                         />
                       </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs text-slate-700 font-bold mb-1.5">সেলসম্যান (Salesman) *</label>
+                        <div className="relative">
+                          
+<select value={manualOrderSalesman} onChange={(e) => setManualOrderSalesman(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors cursor-pointer"><option value="">নির্বাচন করুন</option>{staffList?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
                       <label className="text-xs text-slate-500 font-medium shrink-0">অর্ডারের উৎস:</label>
                       <div className="flex flex-wrap gap-2">
                         {[
+                          { id: 'shop', label: 'শপ থেকে সেল', icon: <Store size={14} className="text-amber-600" /> },
                           { id: 'website', label: 'ওয়েবসাইট', icon: <Globe size={14} /> },
                           { id: 'facebook', label: 'ফেসবুক', icon: <Facebook size={14} className="text-blue-600" /> },
                           { id: 'whatsapp', label: 'হোয়াটসঅ্যাপ', icon: <MessageCircle size={14} className="text-[#25D366]" /> }
@@ -4110,18 +4342,48 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                       <div className="md:col-span-7">
                         <label className="block text-xs text-slate-700 font-bold mb-1.5">পণ্য নির্বাচন করুন</label>
-                        <select
-                          value={manualSelectedProductId}
-                          onChange={(e) => setManualSelectedProductId(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors"
-                        >
-                          <option value="">-- পণ্য নির্বাচন করুন --</option>
-                          {products.map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.name} ({p.weight}) - ৳{p.discountedPrice || p.originalPrice}
-                            </option>
-                          ))}
-                        </select>
+                        
+<div className="relative">
+  <input
+    type="text"
+    placeholder="পণ্য খুঁজুন (টাইপ করুন)..."
+    value={manualProductSearch || (manualSelectedProductId ? (products.find(p => p.id === manualSelectedProductId)?.name || '') : '')}
+    onChange={(e) => {
+      setManualProductSearch(e.target.value);
+      setIsManualProductSearchOpen(true);
+      setManualSelectedProductId('');
+    }}
+    onFocus={() => setIsManualProductSearchOpen(true)}
+    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors"
+  />
+  {isManualProductSearchOpen && (
+    <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg animate-in fade-in zoom-in-95 duration-150">
+      <div className="p-1">
+        {products.filter(p => p.name.toLowerCase().includes(manualProductSearch.toLowerCase())).map(p => {
+          const price = p.discountedPrice || p.originalPrice;
+          return (
+            <div
+              key={p.id}
+              onClick={() => {
+                setManualSelectedProductId(p.id);
+                setManualProductSearch('');
+                setIsManualProductSearchOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer rounded-lg flex justify-between items-center"
+            >
+              <span className="truncate pr-2">{p.name} ({p.weight})</span>
+              <span className="shrink-0 text-emerald-600 font-bold">&nbsp;৳{price}</span>
+            </div>
+          );
+        })}
+        {products.filter(p => p.name.toLowerCase().includes(manualProductSearch.toLowerCase())).length === 0 && (
+          <div className="p-3 text-sm text-slate-500 text-center">কোনো পণ্য পাওয়া যায়নি</div>
+        )}
+      </div>
+    </div>
+  )}
+</div>
+
                       </div>
                       <div className="md:col-span-2">
                         <label className="block text-xs text-slate-700 font-bold mb-1.5">পরিমাণ (Qty)</label>
@@ -4247,7 +4509,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <button
                         type="button"
                         onClick={() => {
-                          if (!manualOrderCustomerName || !manualOrderPhone || !manualOrderAddress) {
+                          if (manualOrderSource !== 'shop' && (!manualOrderCustomerName || !manualOrderPhone || !manualOrderAddress)) {
                             alert('অনুগ্রহ করে কাস্টমারের নাম, ফোন নম্বর ও ডেলিভারি ঠিকানা সঠিকভাবে লিখুন।');
                             return;
                           }
@@ -4262,15 +4524,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                           const newOrderObj = {
                             id: trackingId,
-                            customerName: manualOrderCustomerName,
-                            phone: manualOrderPhone,
-                            address: manualOrderAddress,
+                            customerName: manualOrderCustomerName || 'শপ কাস্টমার',
+                            phone: manualOrderPhone || 'N/A',
+                            address: manualOrderAddress || 'N/A',
                             items: manualOrderItems,
                             total: totalBill,
                             date: new Date().toISOString(),
-                            status: 'Pending' as const
+                            status: 'Pending' as const,
+                            salesman: manualOrderSalesman,
+                            source: manualOrderSource
                           };
-
                           // Deduct from product stocks
                           products.forEach(p => {
                             const orderItem = manualOrderItems.find(it => it.id === p.id);
@@ -4281,12 +4544,12 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           });
 
                           // Save Order
-                          addSimulatedOrder(newOrderObj);
+                          addSimulatedOrder(newOrderObj, true);
 
-                          addNotification(
-                            'ম্যানুয়াল অর্ডার তৈরি করা হয়েছে 🎉',
-                            `কাস্টমার ${manualOrderCustomerName} এর জন্য ৳${totalBill} মূল্যের অর্ডারটি সফলভাবে এন্ট্রি করা হয়েছে।`
-                          );
+                          
+
+                          // Trigger print
+                          setInvoiceToPrint(newOrderObj);
 
                           // Trigger sound
                           if (soundEnabled) {
@@ -4304,7 +4567,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         }}
                         className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-sm font-bold text-xs py-3.5 rounded-xl cursor-pointer transition-all duration-200 shadow-md active:scale-98 flex items-center justify-center gap-1.5"
                       >
-                        🚀 অর্ডার তৈরি সম্পন্ন করুন (Save Order)
+                        অর্ডার তৈরি সম্পন্ন করুন (Save Order)
                       </button>
                     </div>
                   </div>
@@ -5020,6 +5283,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         onClick={() => setIsSourceDropdownOpen(!isSourceDropdownOpen)}
                         className="flex items-center gap-2 text-[10px] font-bold px-2 py-1 rounded-md border border-slate-200 outline-none text-slate-600 bg-[#f8fafc] hover:bg-slate-100 transition-colors"
                       >
+                        {manualOrderSource === 'shop' && 'শপ থেকে সেল (Shop)'}
                         {manualOrderSource === 'website' && 'ওয়েবসাইট (Website)'}
                         {manualOrderSource === 'facebook' && 'ফেসবুক (Facebook)'}
                         {manualOrderSource === 'whatsapp' && 'হোয়াটসঅ্যাপ (WhatsApp)'}
@@ -5027,8 +5291,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </button>
                       
                       {isSourceDropdownOpen && (
-                        <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                           <div className="p-1">
+                            <button 
+                              onClick={() => { setManualOrderSource('shop'); setIsSourceDropdownOpen(false); }}
+                              className="w-full text-left px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-[#f8fafc] rounded-lg flex items-center gap-2"
+                            >
+                              <Store size={12} className="text-amber-600" /> শপ থেকে সেল (Shop)
+                            </button>
                             <button 
                               onClick={() => { setManualOrderSource('website'); setIsSourceDropdownOpen(false); }}
                               className="w-full text-left px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-[#f8fafc] rounded-lg flex items-center gap-2"
@@ -5091,10 +5361,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] text-slate-500 font-medium mb-1">গ্রাহকের নাম *</label>
+                    <label className="block text-[10px] text-slate-500 font-medium mb-1">গ্রাহকের নাম {manualOrderSource !== 'shop' && '*'}</label>
                     <input 
                       type="text" 
-                      required
+                      required={manualOrderSource !== 'shop'}
                       placeholder="যেমন: মুহাম্মদ সালমান" 
                       value={manualOrderCustomerName}
                       onChange={(e) => setManualOrderCustomerName(e.target.value)}
@@ -5102,10 +5372,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-500 font-medium mb-1">মোবাইল নম্বর *</label>
+                    <label className="block text-[10px] text-slate-500 font-medium mb-1">মোবাইল নম্বর {manualOrderSource !== 'shop' && '*'}</label>
                     <input 
                       type="text" 
-                      required
+                      required={manualOrderSource !== 'shop'}
                       placeholder="যেমন: 01712345678" 
                       value={manualOrderPhone}
                       onChange={(e) => setManualOrderPhone(e.target.value)}
@@ -5113,15 +5383,24 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-[10px] text-slate-500 font-medium mb-1">ডেলিভারি ঠিকানা *</label>
+                    <label className="block text-[10px] text-slate-500 font-medium mb-1">ডেলিভারি ঠিকানা {manualOrderSource !== 'shop' && '*'}</label>
                     <input 
                       type="text" 
-                      required
+                      required={manualOrderSource !== 'shop'}
                       placeholder="যেমন: রোড ৪, হাউজিং স্টেট, ধানমন্ডি, ঢাকা" 
                       value={manualOrderAddress}
                       onChange={(e) => setManualOrderAddress(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600"
                     />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] text-slate-500 font-medium mb-1">সেলসম্যান (Salesman) *</label>
+                    <div className="relative">
+                      
+<select value={manualOrderSalesman} onChange={(e) => setManualOrderSalesman(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600 bg-white hover:bg-[#f8fafc] cursor-pointer"><option value="">নির্বাচন করুন</option>{staffList?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+
+                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                    </div>
                   </div>
                   <div className="sm:col-span-2 mt-1">
                     <label className="block text-[10px] text-slate-500 font-medium mb-2">পেমেন্ট স্ট্যাটাস *</label>
@@ -5156,55 +5435,59 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               {/* Form 2: Product Adder */}
               <div className="space-y-3.5">
                 <h4 className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold bn-safe">২. পণ্য এবং পরিমাণ যুক্ত করুন</h4>
-                <div className="flex gap-2 items-end">
-                  <div className="flex-1">
-                    <label className="block text-[10px] text-slate-500 font-medium mb-1">পণ্য নির্বাচন করুন</label>
-                    <div className="relative">
-                      <button 
-                        onClick={() => setIsProductDropdownOpen(!isProductDropdownOpen)}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none bg-white hover:bg-[#f8fafc] transition-colors flex justify-between items-center"
-                      >
-                        <span className="text-slate-700 truncate">
-                          {manualSelectedProductId 
-                            ? products.find(p => p.id === manualSelectedProductId)?.name + ` (৳${products.find(p => p.id === manualSelectedProductId)?.discountedPrice || products.find(p => p.id === manualSelectedProductId)?.originalPrice})` 
-                            : 'নির্বাচন করুন...'}
-                        </span>
-                        <ChevronDown size={14} className={`text-slate-500 transition-transform ${isProductDropdownOpen ? 'rotate-180' : ''}`} />
-                      </button>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:items-end">
+                  <div className="flex gap-2 items-end flex-1 w-full">
+                    <div className="flex-1 min-w-0">
+                      <label className="block text-[10px] text-slate-500 font-medium mb-1">পণ্য নির্বাচন করুন</label>
                       
-                      {isProductDropdownOpen && (
-                        <div className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150">
-                          <div className="p-1">
-                            {products.map(p => {
-                              const price = p.discountedPrice || p.originalPrice;
-                              return (
-                                <button 
-                                  key={p.id}
-                                  onClick={() => {
-                                    setManualSelectedProductId(p.id);
-                                    setIsProductDropdownOpen(false);
-                                  }}
-                                  className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-emerald-50 rounded-lg flex justify-between items-center"
-                                >
-                                  <span className="truncate pr-2">{p.name}</span>
-                                  <span className="shrink-0 text-emerald-600">&nbsp;৳{price}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+<div className="relative">
+  <input
+    type="text"
+    placeholder="পণ্য খুঁজুন (টাইপ করুন)..."
+    value={manualProductSearch || (manualSelectedProductId ? (products.find(p => p.id === manualSelectedProductId)?.name || '') : '')}
+    onChange={(e) => {
+      setManualProductSearch(e.target.value);
+      setIsProductDropdownOpen(true);
+      setManualSelectedProductId('');
+    }}
+    onFocus={() => setIsProductDropdownOpen(true)}
+    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none bg-white hover:bg-[#f8fafc] transition-colors focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/10"
+  />
+  {isProductDropdownOpen && (
+    <div className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div className="p-1">
+        {products.filter(p => p.name.toLowerCase().includes(manualProductSearch.toLowerCase())).map(p => {
+          const price = p.discountedPrice || p.originalPrice;
+          return (
+            <div
+              key={p.id}
+              onClick={() => {
+                setManualSelectedProductId(p.id);
+                setManualProductSearch('');
+                setIsProductDropdownOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer rounded-lg flex justify-between items-center"
+            >
+              <span className="truncate pr-2">{p.name} ({p.weight})</span>
+              <span className="shrink-0 text-emerald-600 font-bold">&nbsp;৳{price}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+</div>
                     </div>
-                  </div>
-                  <div className="w-20">
-                    <label className="block text-[10px] text-slate-500 font-medium mb-1">পরিমাণ</label>
-                    <input 
-                      type="number" 
-                      min="1"
-                      value={manualSelectedQuantity}
-                      onChange={(e) => setManualSelectedQuantity(Math.max(1, Number(e.target.value)))}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600"
-                    />
+                    <div className="w-20 shrink-0">
+                      <label className="block text-[10px] text-slate-500 font-medium mb-1">পরিমাণ</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        value={manualSelectedQuantity}
+                        onChange={(e) => setManualSelectedQuantity(Math.max(1, Number(e.target.value)))}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600"
+                      />
+                    </div>
                   </div>
                   <button 
                     type="button"
@@ -5233,7 +5516,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       // Reset selection quantity
                       setManualSelectedQuantity(1);
                     }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm px-4 py-2 rounded-xl text-sm font-medium h-[38px] transition-all cursor-pointer"
+                    className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm px-4 py-2 rounded-xl text-sm font-medium h-[38px] transition-all cursor-pointer w-full sm:w-auto shrink-0"
                   >
                     যোগ করুন
                   </button>
@@ -5283,7 +5566,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                       <div className="flex justify-between">
                         <span>হোম ডেলিভারি চার্জ:</span>
-                        <span>&nbsp;৳৬০</span>
+                        <span>৳ ৬০</span>
                       </div>
                       <div className="flex justify-between text-slate-800 font-bold text-xs pt-1.5 border-t border-slate-200">
                         <span>সর্বমোট বিল:</span>
@@ -5305,17 +5588,17 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </button>
               <button 
                 type="button"
-                disabled={manualOrderItems.length === 0 || !manualOrderCustomerName || !manualOrderPhone || !manualOrderAddress}
+                
                 onClick={() => {
                   if (manualOrderItems.length === 0) return;
-                  if (!manualOrderCustomerName || !manualOrderPhone || !manualOrderAddress) {
-                    addNotification('সতর্কতা', 'অনুগ্রহ করে গ্রাহকের সম্পূর্ণ বিবরণ ও তথ্য প্রদান করুন।');
+                  if (manualOrderSource !== 'shop' && (!manualOrderCustomerName || !manualOrderPhone || !manualOrderAddress)) {
+                    alert('অনুগ্রহ করে গ্রাহকের সম্পূর্ণ বিবরণ ও তথ্য প্রদান করুন।');
                     return;
                   }
 
                   // Standard BD Phone number quick validation
-                  if (!manualOrderPhone.startsWith('01') || manualOrderPhone.length < 11) {
-                    addNotification('সতর্কতা', 'অনুগ্রহ করে একটি সঠিক বাংলাদেশী মোবাইল নম্বর লিখুন (যেমন: 017XXXXXXXX)।');
+                  if (manualOrderSource !== 'shop' && (!manualOrderPhone.startsWith('01') || manualOrderPhone.length < 11)) {
+                    alert('অনুগ্রহ করে একটি সঠিক বাংলাদেশী মোবাইল নম্বর লিখুন (যেমন: 017XXXXXXXX)।');
                     return;
                   }
 
@@ -5324,17 +5607,18 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                   const newManualOrderObj = {
                     id: `man-${Math.floor(1000 + Math.random() * 9000)}`,
-                    customerName: manualOrderCustomerName,
-                    phone: manualOrderPhone,
-                    address: manualOrderAddress,
+                    customerName: manualOrderCustomerName || 'শপ কাস্টমার',
+                            phone: manualOrderPhone || 'N/A',
+                            address: manualOrderAddress || 'N/A',
                     source: manualOrderSource,
                     items: manualOrderItems,
                     total: grandTotal,
                     date: new Date().toISOString(),
-                    status: 'Pending' as const
+                    status: 'Pending' as const,
+                            salesman: manualOrderSalesman
                   };
 
-                  addSimulatedOrder(newManualOrderObj);
+                  addSimulatedOrder(newManualOrderObj, true);
 
                   if (manualOrderIsDue) {
                     const addedDue = {
@@ -5348,10 +5632,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     };
                     setDues(prevDues => [addedDue, ...prevDues]);
                   }
-                  addNotification(
-                    'ম্যানুয়াল অর্ডার বুকিং করা হয়েছে 📝',
-                    `গ্রাহক ${manualOrderCustomerName} এর জন্য ৳${grandTotal} টাকার নতুন অর্ডার বুকিং সম্পন্ন।`
-                  );
+                  
 
                   // Play sound
                   if (soundEnabled) {
@@ -5371,7 +5652,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   setManualOrderItems([]);
                 }}
                 className={`px-5 py-2 rounded-xl text-sm font-medium text-white shadow-md transition-all ${
-                  (manualOrderItems.length === 0 || !manualOrderCustomerName || !manualOrderPhone || !manualOrderAddress)
+                  (manualOrderItems.length === 0 || (manualOrderSource !== 'shop' && (!manualOrderCustomerName || !manualOrderPhone || !manualOrderAddress)))
                     ? 'bg-slate-300 cursor-not-allowed'
                     : 'bg-slate-900 hover:bg-slate-800'
                 }`}
@@ -5649,7 +5930,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
 
               {/* Actions */}
-              <div className="pt-4 border-t border-slate-200 flex flex-wrap gap-2 justify-end shrink-0 select-none">
+              <div className="pt-4 border-t border-slate-200 flex flex-wrap gap-2 justify-end shrink-0 select-none w-full">
+                <button 
+                  onClick={() => { setInvoiceToPrint(selectedOrder); setSelectedOrder(null); }}
+                  className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                >
+                  <Printer size={13} /> ইনভয়েস
+                </button>
                 {selectedOrder.status !== 'Completed' && (
                   <button 
                     onClick={() => { setBookingOrder(selectedOrder); setSelectedOrder(null); }}
@@ -5747,11 +6034,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                   <div>
                     <label className="block text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-1.5">পণ্য ক্যাটাগরি</label>
-                    <select className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-emerald-600 bg-white">
-                      <option>খাদ্য সামগ্রী (নন-প্যারিশেবল)</option>
-                      <option>তাজা খাবার ও ফলমূল</option>
-                      <option>তরল ও দুগ্ধজাত পণ্য</option>
-                    </select>
+                    
+<select value={productFormData.category} onChange={(e) => setProductFormData(p => ({ ...p, category: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-emerald-600 cursor-pointer"><option value="">নির্বাচন করুন</option>{categoriesList?.map((c: any) => <option key={c.id || c} value={c.name || c}>{c.name || c}</option>)}</select>
+
                   </div>
 
                   <div className="pt-2">
@@ -5955,10 +6240,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
       {/* Invoice Print Modal */}
       {invoiceToPrint && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 print:bg-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 print:bg-white print:static print:block print:p-0 print:inset-auto">
           <div className="fixed inset-0 bg-transparent print:hidden" onClick={() => setInvoiceToPrint(null)}></div>
           
-          <div className="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh] print:fixed print:inset-0 print:m-0 print:w-full print:max-w-none print:h-auto print:max-h-none print:rounded-none print:shadow-none print:border-none print:overflow-visible">
+          <div className="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh] print:static print:m-0 print:w-full print:max-w-none print:h-auto print:max-h-none print:rounded-none print:shadow-none print:border-none print:overflow-visible print:block">
             {/* Action Bar (Hidden in Print) */}
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-[#f8fafc] print:hidden shrink-0">
               <h3 className="font-semibold text-slate-800 flex items-center gap-2 text-sm">
@@ -5970,7 +6255,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={() => window.print()} 
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-md flex items-center gap-2"
                 >
-                  <Printer size={14} /> প্রিন্ট করুন
+                  <Printer size={14} /> প্রিন্ট / সেভ পিডিএফ
                 </button>
                 <button onClick={() => setInvoiceToPrint(null)} className="text-slate-500 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-full bg-slate-200/50 hover:bg-slate-200 transition-colors">
                   <X size={16} strokeWidth={3} />
@@ -5979,7 +6264,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
 
             {/* Printable Invoice Area */}
-            <div className="flex-1 overflow-y-auto p-8 md:p-10 print:p-8 bg-white" id="printable-invoice">
+            <div className="flex-1 overflow-y-auto p-8 md:p-10 print:p-0 bg-white print:overflow-visible" id="printable-invoice" ref={a4PrintRef}>
               <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-slate-800">
                 <div>
                   <h1 className="text-3xl font-bold text-emerald-600 tracking-tight">উর্বর ফুড</h1>
@@ -6007,29 +6292,30 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       {invoiceToPrint.source === 'facebook' && <Facebook size={12} />}
                       {invoiceToPrint.source === 'whatsapp' && <MessageCircle size={12} />}
                       {invoiceToPrint.source === 'website' && <Globe size={12} />}
-                      {invoiceToPrint.source === 'facebook' ? 'Facebook' : invoiceToPrint.source === 'whatsapp' ? 'WhatsApp' : 'Website'}
+                      {invoiceToPrint.source === 'shop' && <Store size={12} />}
+                      {invoiceToPrint.source === 'facebook' ? 'Facebook' : invoiceToPrint.source === 'whatsapp' ? 'WhatsApp' : invoiceToPrint.source === 'shop' ? 'Shop' : 'Website'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-8 rounded-xl border border-slate-200 overflow-hidden">
+              <div className="mb-8 rounded-xl border border-slate-200">
                 <table className="w-full text-left">
                   <thead className="bg-slate-800">
                     <tr>
-                      <th className="py-3 px-4 text-[10px] text-xs font-semibold uppercase tracking-wider text-slate-500 text-white uppercase tracking-wider">বিবরণ</th>
-                      <th className="py-3 px-4 text-[10px] text-xs font-semibold uppercase tracking-wider text-slate-500 text-white uppercase tracking-wider text-center">পরিমাণ</th>
-                      <th className="py-3 px-4 text-[10px] text-xs font-semibold uppercase tracking-wider text-slate-500 text-white uppercase tracking-wider text-right">মূল্য</th>
-                      <th className="py-3 px-4 text-[10px] text-xs font-semibold uppercase tracking-wider text-slate-500 text-white uppercase tracking-wider text-right">মোট</th>
+                      <th className="py-3 px-6 text-xs font-semibold uppercase tracking-wider text-white">বিবরণ</th>
+                      <th className="py-3 px-6 text-xs font-semibold uppercase tracking-wider text-white text-center">পরিমাণ</th>
+                      <th className="py-3 px-6 text-xs font-semibold uppercase tracking-wider text-white text-right">মূল্য</th>
+                      <th className="py-3 px-6 text-xs font-semibold uppercase tracking-wider text-white text-right">মোট</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/60">
                     {invoiceToPrint.items.map((item: any, idx: number) => (
                       <tr key={idx} className="bg-white">
-                        <td className="py-4 px-4 text-xs font-medium text-slate-700">{item.name}</td>
-                        <td className="py-4 px-4 text-xs font-medium text-slate-700 text-center bg-[#f8fafc]">{item.quantity}</td>
-                        <td className="py-4 px-4 text-xs font-medium text-slate-500 text-right">&nbsp;৳{item.price.toLocaleString('bn-BD')}</td>
-                        <td className="py-4 px-4 text-xs font-medium text-slate-800 text-right bg-[#f8fafc]">&nbsp;৳{(item.price * item.quantity).toLocaleString('bn-BD')}</td>
+                        <td className="py-4 px-6 text-sm font-medium text-slate-700 leading-relaxed">{item.name}</td>
+                        <td className="py-4 px-6 text-sm font-medium text-slate-700 text-center bg-[#f8fafc]">{item.quantity}</td>
+                        <td className="py-4 px-6 text-sm font-medium text-slate-500 text-right">৳ {item.price.toLocaleString('bn-BD')}</td>
+                        <td className="py-4 px-6 text-sm font-medium text-slate-800 text-right bg-[#f8fafc]">৳ {(item.price * item.quantity).toLocaleString('bn-BD')}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -6040,15 +6326,15 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="w-64 space-y-3 bg-[#f8fafc] p-5 rounded-xl border border-slate-200">
                   <div className="flex justify-between text-sm font-medium text-slate-500">
                     <span>সাবটোটাল:</span>
-                    <span>&nbsp;৳{invoiceToPrint.items.reduce((sum: any, item: any) => sum + (item.price * item.quantity), 0).toLocaleString('bn-BD')}</span>
+                    <span>৳ {invoiceToPrint.items.reduce((sum: any, item: any) => sum + (item.price * item.quantity), 0).toLocaleString('bn-BD')}</span>
                   </div>
                   <div className="flex justify-between text-sm font-medium text-slate-500">
                     <span>ডেলিভারি চার্জ:</span>
-                    <span>&nbsp;৳৬০</span>
+                    <span>৳ ৬০</span>
                   </div>
                   <div className="flex justify-between text-sm font-bold text-emerald-600 pt-3 border-t border-slate-200">
                     <span>সর্বমোট বিল:</span>
-                    <span className="text-base">&nbsp;৳{invoiceToPrint.total.toLocaleString('bn-BD')}</span>
+                    <span className="text-base">৳ {invoiceToPrint.total.toLocaleString('bn-BD')}</span>
                   </div>
                 </div>
               </div>

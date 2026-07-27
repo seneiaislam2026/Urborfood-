@@ -19,7 +19,7 @@ export default function OrderTrackingModal() {
     setSearched(true);
     const cleanId = orderId.toUpperCase().trim();
     // Allow searching by Tracking ID or Phone
-    const foundOrder = orders.find(o => o.id.toUpperCase() === cleanId || o.phone.replace(/[\s-]/g, '') === cleanId.replace(/[\s-]/g, ''));
+    const foundOrder = orders.find(o => o.id.toUpperCase() === cleanId || o.phone.replace(/[\s-]/g, '') === cleanId.replace(/[\s-]/g, '') || o.phone.includes(cleanId));
 
     if (!foundOrder) {
       setTrackingResult(null);
@@ -33,7 +33,7 @@ export default function OrderTrackingModal() {
       { title: 'ডেলিভারি সম্পন্ন', date: '', completed: false }
     ];
 
-    let currentStep = 0; // 0: Placed, 1: Processing/Confirmed, 2: Shipped, 3: Delivered
+    let currentStep = 0;
     let statusText = 'পেন্ডিং';
 
     if (foundOrder.status === 'Confirmed') {
