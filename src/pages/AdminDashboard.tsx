@@ -4354,7 +4354,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setManualSelectedProductId('');
     }}
     onFocus={() => setIsManualProductSearchOpen(true)}
-    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors"
+    className="w-full px-4 py-3 leading-relaxed rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors"
   />
   {isManualProductSearchOpen && (
     <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg animate-in fade-in zoom-in-95 duration-150">
@@ -4371,7 +4371,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               }}
               className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer rounded-lg flex justify-between items-center"
             >
-              <span className="truncate pr-2">{p.name} ({p.weight})</span>
+              <div className="flex items-baseline min-w-0 flex-1 pr-2"><span className="truncate py-0.5 leading-relaxed">{p.name}</span><span className="shrink-0 text-slate-500 text-xs ml-1 whitespace-nowrap">({p.weight})</span></div>
               <span className="shrink-0 text-emerald-600 font-bold">&nbsp;৳{price}</span>
             </div>
           );
@@ -4387,13 +4387,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                       <div className="md:col-span-2">
                         <label className="block text-xs text-slate-700 font-bold mb-1.5">পরিমাণ (Qty)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={manualSelectedQuantity}
-                          onChange={(e) => setManualSelectedQuantity(Number(e.target.value))}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 outline-none text-slate-800 transition-colors"
-                        />
+                        <input type="number" min="1" value={manualSelectedQuantity} onChange={(e) => setManualSelectedQuantity(Number(e.target.value) || 1)} className="w-full px-2 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 outline-none text-slate-800 transition-colors text-center leading-relaxed" />
                       </div>
                       <div className="md:col-span-3">
                         <button
@@ -5451,7 +5445,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setManualSelectedProductId('');
     }}
     onFocus={() => setIsProductDropdownOpen(true)}
-    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none bg-white hover:bg-[#f8fafc] transition-colors focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/10"
+    className="w-full px-3 py-2.5 leading-relaxed rounded-xl border border-slate-200 text-sm font-medium outline-none bg-white hover:bg-[#f8fafc] transition-colors focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/10"
   />
   {isProductDropdownOpen && (
     <div className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150">
@@ -5468,7 +5462,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               }}
               className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer rounded-lg flex justify-between items-center"
             >
-              <span className="truncate pr-2">{p.name} ({p.weight})</span>
+              <div className="flex items-baseline min-w-0 flex-1 pr-2"><span className="truncate py-0.5 leading-relaxed">{p.name}</span><span className="shrink-0 text-slate-500 text-xs ml-1 whitespace-nowrap">({p.weight})</span></div>
               <span className="shrink-0 text-emerald-600 font-bold">&nbsp;৳{price}</span>
             </div>
           );
@@ -5480,13 +5474,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     </div>
                     <div className="w-20 shrink-0">
                       <label className="block text-[10px] text-slate-500 font-medium mb-1">পরিমাণ</label>
-                      <input 
-                        type="number" 
-                        min="1"
-                        value={manualSelectedQuantity}
-                        onChange={(e) => setManualSelectedQuantity(Math.max(1, Number(e.target.value)))}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600"
-                      />
+                      <input type="number" min="1" value={manualSelectedQuantity} onChange={(e) => setManualSelectedQuantity(Number(e.target.value) || 1)} className="w-full px-1 py-2 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600 text-center leading-relaxed" />
                     </div>
                   </div>
                   <button 
@@ -6299,8 +6287,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
               </div>
 
-              <div className="mb-8 rounded-xl border border-slate-200">
-                <table className="w-full text-left">
+              <div className="mb-8 rounded-xl border border-slate-200 overflow-x-auto print:overflow-visible">
+                <table className="w-full text-left min-w-[500px] print:min-w-0">
                   <thead className="bg-slate-800">
                     <tr>
                       <th className="py-3 px-6 text-xs font-semibold uppercase tracking-wider text-white">বিবরণ</th>
