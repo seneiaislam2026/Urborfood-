@@ -533,17 +533,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedUser = username.trim().toLowerCase();
-    const isOldCreds = normalizedUser === 'urborfood' && password === 'Urborfood.com@@';
-    const isNewCreds = normalizedUser === 'urborfood' && password === 'Urborfood.com@@';
+    const isOldCreds = normalizedUser === 'urborfood' && password.trim() === 'Urborfood.com@@';
     
-    if (isOldCreds || isNewCreds) {
+    if (isOldCreds) {
       setIsAuthenticated(true);
       if (typeof window !== 'undefined') {
         safeSetItem('urbor_admin_auth', 'true');
       }
       setError('');
     } else {
-      setError('ভুল ইউজারনেম বা পাসওয়ার্ড! সঠিক এডমিন লগইন - ইউজারনেম: Urborfood, পাসওয়ার্ড: Urborfood.com@@');
+      setError('ভুল ইউজারনেম বা পাসওয়ার্ড! সঠিক এডমিন লগইন - ইউজারনেম: admin, পাসওয়ার্ড: admin');
     }
   };
 

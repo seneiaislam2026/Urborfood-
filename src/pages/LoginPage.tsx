@@ -33,18 +33,19 @@ export default function LoginPage() {
 
     if (isLogin) {
       const normalizedUser = identifier.trim().toLowerCase();
-      const isOldAdmin = normalizedUser === 'urborfood' && password === 'Urborfood.com@@';
-      const isNewAdmin = normalizedUser === 'urborfood' && password === 'Urborfood.com@@';
+      const isOldAdmin = normalizedUser === 'urborfood' && password.trim() === 'Urborfood.com@@';
       
-      if (isOldAdmin || isNewAdmin) {
+      if (isOldAdmin) {
         if (typeof window !== 'undefined') {
           safeSetItem('urbor_admin_auth', 'true');
+          safeRemoveItem('urbor_customer_auth');
           window.location.hash = '#admin';
         }
         return;
       }
       
       if (typeof window !== 'undefined') {
+        safeRemoveItem('urbor_admin_auth');
         safeSetItem('urbor_customer_auth', 'true');
         safeSetItem('urbor_customer_phone', identifier);
         safeSetItem('urbor_customer_name', 'Customer User');
