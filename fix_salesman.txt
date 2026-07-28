@@ -1,0 +1,10 @@
+                      <div className="md:col-span-2">
+                        <label className="block text-xs text-slate-700 font-bold mb-1.5">সেলসম্যান (Salesman) *</label>
+                        <input
+                          type="text"
+                          value={manualOrderSalesman}
+                          onChange={(e) => setManualOrderSalesman(e.target.value)}
+                          placeholder="সেলসম্যানের নাম (e.g. Rahim)"
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 outline-none text-slate-800 placeholder:text-slate-500 transition-colors"
+                        />
+                      </div>

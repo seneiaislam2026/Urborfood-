@@ -1,0 +1,10 @@
+                                <div className="text-[11px] text-slate-500 font-mono tracking-wide mt-0.5 truncate">
+                                  {order.phone}
+                                </div>
+                                {order.salesman && (
+                                  <div className="text-[10px] text-emerald-600 bg-emerald-50 w-max px-1.5 rounded mt-0.5 font-bold truncate">
+                                    এসআর: {order.salesman}
+                                  </div>
+                                )}
+                              </div>
+                            </td>

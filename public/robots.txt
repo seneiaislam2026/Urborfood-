@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.urborfood.com/sitemap.xml

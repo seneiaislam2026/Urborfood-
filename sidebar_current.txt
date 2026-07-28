@@ -1,0 +1,167 @@
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    );
+
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-slate-800">
+
+      {/* Primary Sidebar for Large Screens */}
+      <div className="w-64 bg-slate-900 border-r border-slate-800 hidden md:flex flex-col flex-shrink-0 z-10 text-slate-300">
+        <div className="p-5 flex items-center justify-between border-b border-slate-800 bg-slate-900 text-white">
+          <div className="flex flex-col">
+            <span className="text-lg font-bold tracking-tight leading-normal">স্টোর ম্যানেজমেন্ট</span>
+            <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{t.adminPanel}</span>
+          </div>
+          <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md font-semibold border border-emerald-500/30">LIVE</span>
+        </div>
+        
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+          {navItems().map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={getTabStyle(item.id, isActive)}
+              >
+                <div className="relative">
+                  <Icon size={18} className={getIconColor(item.id, isActive)} />
+                  {isActive && <div className="absolute -inset-2 bg-current opacity-10 rounded-full blur-md" />}
+                </div>
+                <span className="font-medium">{item.label}</span>
+                {item.badge && (
+                  <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-md font-bold shadow-sm ${isActive ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-300'}`}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+        {/* Language Selection option */}
+        <div className="p-4 border-t border-slate-200/60 bg-[#f8fafc]/30 select-none">
+          <label className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">
+            {t.languageLabel}
+          </label>
+          <div className="flex gap-1 p-1 bg-slate-100/70 rounded-lg border border-slate-200/50">
+            <button 
+              type="button"
+              onClick={() => setLang('bn')}
+              className={`flex-1 py-1.5 text-[11px] font-bold rounded-md transition-all ${
+                lang === 'bn' 
+                  ? 'bg-white text-emerald-600 shadow-sm border border-slate-200/60' 
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+              }`}
+            >
+              বাংলা
+            </button>
+            <button 
+              type="button"
+              onClick={() => setLang('en')}
+              className={`flex-1 py-1.5 text-[11px] font-bold rounded-md transition-all ${
+                lang === 'en' 
+                  ? 'bg-white text-emerald-600 shadow-sm border border-slate-200/60' 
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+              }`}
+            >
+              English
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-slate-200/60 bg-white">
+          <button 
+            onClick={handleLogoutClick} 
+            className="flex items-center gap-3 w-full hover:bg-rose-500/10 hover:text-rose-400 px-4 py-3 rounded-xl text-sm font-bold transition-all text-rose-500"
+          >
+            <LogOut size={18} /> {t.logout}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Slide-out Sidebar */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsMobileMenuOpen(false)}></div>
+          <div className="relative flex flex-col w-[280px] max-w-[85vw] bg-slate-900 text-slate-300 h-full shadow-[20px_0_40px_rgb(0,0,0,0.3)] animate-in slide-in-from-left duration-300">
+            <div className="p-5 flex items-center justify-between border-b border-slate-800 bg-slate-900 text-white">
+              <div className="flex flex-col">
+                <span className="text-xl font-black tracking-tight">স্টোর ম্যানেজমেন্ট</span>
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{t.adminPanel}</span>
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400 hover:bg-slate-800 hover:text-white p-2 rounded-xl transition-colors">
+                <X size={20} strokeWidth={2.5} />
+              </button>
+            </div>
+            <nav className="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+              {navItems().map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                
+                return (
+                  <button
+                    key={`mobile-${item.id}`}
+                    onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-[14px] transition-all text-left font-bold ${
+                      isActive 
+                        ? 'bg-emerald-600 text-white shadow-[inset_3px_0_0_0_#34d399]'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white drop-shadow-sm' : 'text-slate-400'} />
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black shadow-sm ${isActive ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-300'}`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Mobile Language Selection option */}
+            <div className="p-4 border-t border-slate-200/60 bg-[#f8fafc]/30 select-none">
+              <label className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2">
+                {t.languageLabel}
+              </label>
+              <div className="flex gap-1 p-1 bg-slate-100/70 rounded-lg border border-slate-200/50">
+                <button 
+                  type="button"
+                  onClick={() => setLang('bn')}
+                  className={`flex-1 py-2 text-[11px] font-bold rounded-md transition-all ${
+                    lang === 'bn' 
+                      ? 'bg-white text-emerald-600 shadow-sm border border-slate-200/60' 
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+                  }`}
+                >
+                  বাংলা
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setLang('en')}
+                  className={`flex-1 py-2 text-[11px] font-bold rounded-md transition-all ${
+                    lang === 'en' 
+                      ? 'bg-white text-emerald-600 shadow-sm border border-slate-200/60' 
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+                  }`}
+                >
+                  English
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-200/60 bg-white">
+              <button onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold transition-all text-rose-500 hover:bg-rose-500/10 hover:text-rose-400">
+                <LogOut size={18} /> {t.logout}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}

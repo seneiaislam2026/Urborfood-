@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+node-compile-cache/
+*.py
+*.cjs
+
+# Allow specific text files
+!public/robots.txt

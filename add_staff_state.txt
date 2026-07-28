@@ -1,0 +1,14 @@
+  const [staffList, setStaffList] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedStaff = localStorage.getItem('urbor_staff_list');
+      if (savedStaff) {
+        try {
+          setStaffList(JSON.parse(savedStaff));
+        } catch (e) {
+          console.error('Failed to parse staff list', e);
+        }
+      }
+    }
+  }, []);

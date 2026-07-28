@@ -1,0 +1,18 @@
+                      <div className="md:col-span-2">
+                        <label className="block text-xs text-slate-700 font-bold mb-1.5">সেলসম্যান (Salesman) *</label>
+                        <div className="relative">
+                          <select
+                            value={manualOrderSalesman}
+                            onChange={(e) => setManualOrderSalesman(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 outline-none text-slate-800 transition-colors bg-white appearance-none pr-10"
+                          >
+                            <option value="" disabled>সেলসম্যান নির্বাচন করুন</option>
+                            {staffList.length > 0 ? staffList.map(s => (
+                              <option key={s.id} value={s.name}>{s.name} ({s.role})</option>
+                            )) : (
+                              <option value="Admin">Admin</option>
+                            )}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                        </div>
+                      </div>
