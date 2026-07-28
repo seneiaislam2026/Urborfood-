@@ -32,7 +32,7 @@ export default function LoginPage() {
     setSuccessMsg('');
 
     if (isLogin) {
-      const normalizedUser = identifier.trim().toLowerCase();
+      const normalizedUser = identifier.trim().toLowerCase().replace(/[\s.]+$/, '');
       const isOldAdmin = normalizedUser === 'urborfood' && password.trim() === 'Urborfood.com@@';
       
       if (isOldAdmin) {

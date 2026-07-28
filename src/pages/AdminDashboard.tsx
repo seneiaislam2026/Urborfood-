@@ -532,7 +532,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const normalizedUser = username.trim().toLowerCase();
+    const normalizedUser = username.trim().toLowerCase().replace(/[\s.]+$/, '');
     const isOldCreds = normalizedUser === 'urborfood' && password.trim() === 'Urborfood.com@@';
     
     if (isOldCreds) {
