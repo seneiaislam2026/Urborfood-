@@ -18,6 +18,17 @@ export interface OrderItem {
   price: number;
 }
 
+
+export interface IncompleteOrder {
+  id: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  items: OrderItem[];
+  total: number;
+  date: string;
+}
+
 export interface Order {
   id: string;
   customerName: string;
@@ -55,6 +66,9 @@ interface CartContextType {
   setIsCheckingOut: (isCheckingOut: boolean) => void;
 
   // Persistent Orders management
+  incompleteOrders: IncompleteOrder[];
+  updateIncompleteOrder: (data: { customerName: string, phone: string, address: string }) => void;
+  removeIncompleteOrder: (id: string) => void;
   orders: Order[];
   placeOrder: (customerName: string, phone: string, address: string) => string;
   placeDirectOrder: (customerName: string, phone: string, address: string, product: Product, quantity: number) => string;
@@ -248,6 +262,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [incompleteOrders, setIncompleteOrders] = useState<IncompleteOrder[]>([]);
+
   
   // Custom Cart Toast state for beautiful feedback when adding items
   const [cartToast, setCartToast] = useState<{
@@ -286,7 +302,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setIsLoadingProducts(false);
       }
     });
+
+    const unsubIncomplete = onSnapshot(doc(db, 'appData', 'incomplete_orders'), (docSnap) => {
+      if (docSnap.exists()) {
+        setIncompleteOrders(docSnap.data().data || []);
+      } else {
+        setDoc(doc(db, 'appData', 'incomplete_orders'), { data: [] });
+      }
+    });
+
     const unsubOrders = onSnapshot(doc(db, 'appData', 'orders'), (docSnap) => {
+
       if (docSnap.exists()) {
         setOrders(docSnap.data().data);
       } else {
@@ -312,7 +338,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     return () => {
       unsubProducts();
+
+      unsubIncomplete();
       unsubOrders();
+
       unsubNotifications();
       unsubReviews();
     };
@@ -498,7 +527,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
   // Order submission
+
+  const updateIncompleteOrder = (data: { customerName: string, phone: string, address: string }) => {
+    if (!data.phone || data.phone.length < 3 || cartItems.length === 0) return;
+    
+    setIncompleteOrders(prev => {
+      const existingIdx = prev.findIndex(o => o.phone === data.phone);
+      const newInc: IncompleteOrder = {
+        id: existingIdx >= 0 ? prev[existingIdx].id : `INC-${Math.floor(10000 + Math.random() * 90000)}`,
+        customerName: data.customerName,
+        phone: data.phone,
+        address: data.address,
+        items: cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.discountedPrice || item.originalPrice
+        })),
+        total: cartTotal,
+        date: new Date().toISOString(),
+      };
+      
+      let updated = [...prev];
+      if (existingIdx >= 0) {
+        updated[existingIdx] = newInc;
+      } else {
+        updated = [newInc, ...updated];
+      }
+      
+      if (isClient) {
+        setDoc(doc(db, 'appData', 'incomplete_orders'), { data: JSON.parse(JSON.stringify(updated)) }).catch(console.error);
+      }
+      return updated;
+    });
+  };
+
+  const removeIncompleteOrder = (idOrPhone: string) => {
+    setIncompleteOrders(prev => {
+      const updated = prev.filter(o => o.id !== idOrPhone && o.phone !== idOrPhone);
+      if (isClient) {
+        setDoc(doc(db, 'appData', 'incomplete_orders'), { data: JSON.parse(JSON.stringify(updated)) }).catch(console.error);
+      }
+      return updated;
+    });
+  };
+
   const placeOrder = (customerName: string, phone: string, address: string) => {
+
     const trackingId = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
     const newOrder: Order = {
       id: trackingId,
@@ -713,6 +788,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       placeDirectOrder,
       updateOrderStatus,
       deleteOrder,
+      incompleteOrders,
+      updateIncompleteOrder,
+      removeIncompleteOrder,
+
       products, isLoadingProducts,
       addProduct,
       updateProduct,

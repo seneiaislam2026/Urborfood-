@@ -80,6 +80,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: 'product-reviews', label: 'প্রোডাক্ট রিভিও', icon: MessageSquare },
     { id: 'inventory', label: t.inventoryControl, icon: Package },
     { id: 'create-order', label: 'সেলস / অর্ডার এন্ট্রি', icon: PlusCircle },
+    { id: 'incomplete-orders', label: 'ইনকম্পিলিট অর্ডার', icon: ShoppingBag },
     { id: 'orders', label: t.orders, icon: ShoppingBag, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
     { id: 'courier', label: t.courierDashboard, icon: Truck },
     { id: 'customers', label: t.customerList, icon: Users },
@@ -91,7 +92,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: 'settings', label: t.settings, icon: Settings },
   ];
 
-  const { heroBannerUrl, setHeroBannerUrl } = useUI();
+  const { heroBannerUrl, setHeroBannerUrl, logoUrl: ctxLogo, setLogoUrl: ctxSetLogo, updateSettingsInDB } = useUI();
   const [logoUrl, setLogoUrl] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('urbor_logo_url') || '/logo.svg';
@@ -1718,6 +1719,48 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               </div>
+              {/* District Ratio Chart */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mt-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-800">জেলা ভিত্তিক অর্ডার রেশিও (৬৪ জেলা)</h3>
+                    <p className="text-xs text-slate-500 font-medium">কোন জেলা থেকে কতগুলো অর্ডার এসেছে তার তুলনামূলক চিত্র</p>
+                  </div>
+                </div>
+                <div className="h-[350px] w-full overflow-x-auto overflow-y-hidden">
+                  <div style={{ minWidth: '800px', height: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={(() => {
+                          const districtData: Record<string, number> = {};
+                          orders.filter(o => o.status !== 'Cancelled').forEach(o => {
+                              let dist = 'অজানা';
+                              if (o.address) {
+                                  dist = o.address.split(',').pop()?.trim() || 'অন্যান্য';
+                              }
+                              // Limit district name length
+                              if (dist.length > 20) dist = dist.substring(0, 20) + '...';
+                              districtData[dist] = (districtData[dist] || 0) + 1;
+                          });
+                          return Object.entries(districtData)
+                              .map(([name, count]) => ({ name, count }))
+                              .sort((a, b) => b.count - a.count);
+                        })()} margin={{ top: 10, right: 10, left: 10, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="name" tick={{fontSize: 10, fill: '#64748b'}} interval={0} angle={-45} textAnchor="end" axisLine={false} tickLine={false} />
+                        <YAxis tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <RechartsTooltip 
+                          cursor={{ fill: '#f8fafc' }}
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                          formatter={(value: number) => [`${value.toLocaleString('bn-BD')} টি`, 'অর্ডার সংখ্যা']}
+                          labelStyle={{ color: '#64748b', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}
+                        />
+                        <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
 
               {/* Quick Mobile search */}
               <div className="block sm:hidden relative">
@@ -4051,7 +4094,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         reader.onloadend = () => {
                           const base64 = reader.result as string;
                           setHeroBannerUrl(base64);
-                          localStorage.setItem('urbor_hero_banner', base64);
+                          if (updateSettingsInDB) updateSettingsInDB({ heroBannerUrl: base64 });
                         };
                         reader.readAsDataURL(file);
                       }
@@ -4080,7 +4123,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         reader.onloadend = () => {
                           const base64 = reader.result as string;
                           setLogoUrl(base64);
-                          localStorage.setItem('urbor_logo_url', base64);
+                          if (ctxSetLogo) ctxSetLogo(base64);
+                          if (updateSettingsInDB) updateSettingsInDB({ logoUrl: base64 });
                           updatePWAIcon();
                         };
                         reader.readAsDataURL(file);
@@ -5192,7 +5236,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 onClick={async () => {
                                   setLoadingBookings(prev => ({...prev, [o.id]: true}));
                                   try {
-                                    const res = await fetch('/api/steadfast/create_order', {
+                                    const res = await fetch('https://portal.packzy.com/api/v1/create_order', {
                                       method: 'POST',
                                       headers: {
                                         'Content-Type': 'application/json',
@@ -6033,7 +6077,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         if (courierService === 'steadfast') {
                           setIsBookingLoading(true);
                           try {
-                            const res = await fetch('/api/steadfast/create_order', {
+                            const res = await fetch('https://portal.packzy.com/api/v1/create_order', {
                               method: 'POST',
                               headers: {
                                 'Content-Type': 'application/json',

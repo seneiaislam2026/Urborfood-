@@ -6,11 +6,11 @@ import { useUI } from '../../context/UIContext';
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount, setIsCartOpen } = useCart();
-  const { setActiveCategory, setIsOrderTrackingOpen, setIsPriceListOpen, setIsMyOrdersOpen } = useUI();
+  const { setActiveCategory, setIsOrderTrackingOpen, setIsPriceListOpen, setIsMyOrdersOpen, ctxLogo: ctxLogo } = useUI();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
   const [customerName, setCustomerName] = useState('');
-  const [logoUrl, setLogoUrl] = useState('/logo.jpg');
+  // const [ctxLogo, setLogoUrl] = useState("/logo.jpg");
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -18,7 +18,7 @@ export default function Header() {
       setIsAdmin(localStorage.getItem('urbor_admin_auth') === 'true');
       setIsCustomer(localStorage.getItem('urbor_customer_auth') === 'true');
       setCustomerName(localStorage.getItem('urbor_customer_name') || 'গ্রাহক');
-      setLogoUrl(localStorage.getItem('urbor_logo_url') || '/logo.jpg');
+      // setLogoUrl
     };
     
     checkAuth();
@@ -51,10 +51,10 @@ export default function Header() {
             className="flex items-center gap-2 cursor-pointer group"
           >
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#f8fafc] rounded-xl flex items-center justify-center overflow-hidden border border-slate-100 group-hover:scale-105 transition-transform">
-              <img src={logoUrl} alt="Urbor Food Logo" className="w-full h-full object-cover" />
+              <img src={ctxLogo} alt="Urbor Food Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] sm:text-[24px] font-black text-slate-800 leading-none tracking-tight">Urbor <span className="text-[#0B6B3A]">Food</span></span>
+              <span className="text-[20px] sm:text-[24px] font-black text-slate-800 leading-none tracking-tight">Urbor <span className="text-[#0b6132]">Food</span></span>
               <span className="text-[10px] sm:text-xs text-slate-500 font-medium tracking-wide">শতভাগ ফ্রেশ</span>
             </div>
           </div>
@@ -66,7 +66,7 @@ export default function Header() {
                 key={index}
                 onClick={link.action}
                 className={`px-4 py-2 rounded-full text-[15px] font-bold transition-all cursor-pointer ${
-                  link.name === 'শপ' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:text-[#0B6B3A] hover:bg-emerald-50/50'
+                  link.name === 'শপ' ? 'bg-[#0b6132]/10 text-[#0b6132]' : 'text-[#0b6132] hover:text-[#f58321] hover:bg-[#f58321]/10'
                 }`}
               >
                 {link.name}
@@ -79,7 +79,7 @@ export default function Header() {
             {/* Cart Icon (Mobile & Desktop) */}
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 text-slate-700 hover:text-[#0B6B3A] transition-colors cursor-pointer flex items-center justify-center"
+              className="relative p-2 text-[#0b6132] hover:text-[#f58321] transition-colors cursor-pointer flex items-center justify-center"
             >
               <ShoppingBag size={24} strokeWidth={2} />
               {cartCount > 0 && (
@@ -92,14 +92,33 @@ export default function Header() {
             {/* Order Now Button (Desktop) */}
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="hidden sm:flex items-center justify-center bg-[#0B6B3A] text-white px-7 py-2.5 rounded-full text-[15px] font-bold hover:bg-[#08552d] hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer shadow-sm tracking-wide"
+              className="hidden sm:flex items-center justify-center bg-[#f58321] text-white px-7 py-2.5 rounded-full text-[15px] font-bold hover:bg-[#d86a10] hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer shadow-sm tracking-wide"
             >
               Order Now
             </button>
 
+                        <button 
+              onClick={() => {
+                if (isAdmin) window.location.hash = '#admin';
+                else if (isCustomer) {
+                  if(confirm('লগআউট করতে চান?')) {
+                    localStorage.removeItem('urbor_customer_auth');
+                    localStorage.removeItem('urbor_customer_phone');
+                    localStorage.removeItem('urbor_customer_name');
+                    window.location.hash = '';
+                    window.location.reload();
+                  }
+                }
+                else window.location.hash = '#login';
+              }}
+              className="hidden lg:flex items-center gap-2 text-slate-700 hover:text-[#0b6132] cursor-pointer text-sm font-bold ml-2"
+            >
+              <User size={20} />
+              {isAdmin ? 'Admin' : isCustomer ? customerName : 'লগইন'}
+            </button>
             {/* Mobile Menu Toggle */}
             <button 
-              className="lg:hidden p-2 text-slate-700 hover:text-[#0B6B3A] cursor-pointer"
+              className="lg:hidden p-2 text-[#0b6132] hover:text-[#f58321] cursor-pointer"
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu size={26} strokeWidth={2} />
@@ -125,9 +144,9 @@ export default function Header() {
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-50">
-              <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              <img src={ctxLogo} alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="text-[18px] font-black text-slate-800 tracking-tight">Urbor <span className="text-[#0B6B3A]">Food</span></span>
+            <span className="text-[18px] font-black text-slate-800 tracking-tight">Urbor <span className="text-[#0b6132]">Food</span></span>
           </div>
           <button 
             onClick={() => setIsMobileMenuOpen(false)}
@@ -141,25 +160,25 @@ export default function Header() {
           <nav className="flex flex-col gap-2">
             <button
               onClick={() => { setIsMyOrdersOpen(true); setIsMobileMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0B6B3A] hover:bg-emerald-50/70 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0b6132] hover:bg-emerald-50/70 transition-colors cursor-pointer"
             >
               📦 আমার অর্ডার
             </button>
             <button
               onClick={() => { setIsPriceListOpen(true); setIsMobileMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0B6B3A] hover:bg-emerald-50/70 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0b6132] hover:bg-emerald-50/70 transition-colors cursor-pointer"
             >
               📋 মূল্য তালিকা
             </button>
             <button
               onClick={() => { setIsMobileMenuOpen(false); setTimeout(() => { document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' }); }, 100); }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0B6B3A] hover:bg-emerald-50/70 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0b6132] hover:bg-emerald-50/70 transition-colors cursor-pointer"
             >
               ⭐ প্রোডাক্ট রিভিও
             </button>
             <button
               onClick={() => { window.location.hash = ''; setActiveCategory(null); setIsMobileMenuOpen(false); }}
-              className="w-full text-left px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0B6B3A] hover:bg-emerald-50/70 transition-colors cursor-pointer"
+              className="w-full text-left px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0b6132] hover:bg-emerald-50/70 transition-colors cursor-pointer"
             >
               শপ
             </button>
@@ -182,7 +201,7 @@ export default function Header() {
                   <button
                     key={cat.id}
                     onClick={() => { setActiveCategory(cat.id); window.location.hash = ''; setIsMobileMenuOpen(false); }}
-                    className="w-full text-left px-3 py-2.5 rounded-lg text-[15px] font-bold text-slate-600 hover:text-[#0B6B3A] hover:bg-emerald-50 transition-colors cursor-pointer"
+                    className="w-full text-left px-3 py-2.5 rounded-lg text-[15px] font-bold text-slate-600 hover:text-[#0b6132] hover:bg-emerald-50 transition-colors cursor-pointer"
                   >
                     {cat.label}
                   </button>
@@ -195,7 +214,7 @@ export default function Header() {
         <div className="p-5 border-t border-gray-100 space-y-3 bg-[#f8fafc]">
           <button 
             onClick={() => { setIsCartOpen(true); setIsMobileMenuOpen(false); }}
-            className="w-full flex items-center justify-center bg-[#0B6B3A] text-white py-3.5 rounded-xl text-[15px] font-bold shadow-md hover:bg-[#08552d] transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center bg-[#f58321] text-white hover:bg-[#d86a10] py-3.5 rounded-xl text-[15px] font-bold shadow-md hover:bg-[#08552d] transition-colors cursor-pointer"
           >
             Order Now
           </button>
@@ -207,17 +226,27 @@ export default function Header() {
             <Truck size={18} /> অর্ডার ট্র্যাক
           </button>
 
-          <button 
+                    <button 
             onClick={() => { 
               setIsMobileMenuOpen(false); 
               if (isAdmin) window.location.hash = '#admin';
+              else if (isCustomer) {
+                  if(confirm('লগআউট করতে চান?')) {
+                    localStorage.removeItem('urbor_customer_auth');
+                    localStorage.removeItem('urbor_customer_phone');
+                    localStorage.removeItem('urbor_customer_name');
+                    window.location.hash = '';
+                    window.location.reload();
+                  }
+              }
               else window.location.hash = '#login';
             }}
             className="w-full flex items-center justify-center gap-2 text-slate-500 py-2 rounded-xl text-sm font-bold hover:bg-slate-100 transition-colors cursor-pointer mt-2"
           >
             <User size={16} /> 
-            {isAdmin ? 'Admin Dashboard' : isCustomer ? customerName : 'Login'}
+            {isAdmin ? 'Admin Dashboard' : isCustomer ? customerName + ' (Logout)' : 'লগইন'}
           </button>
+
         </div>
       </div>
     </>

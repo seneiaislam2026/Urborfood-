@@ -32,7 +32,12 @@ export default function CartDrawer() {
 
   const handleCheckoutSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (removeIncompleteOrder) {
+      removeIncompleteOrder(formData.phone);
+    }
     const trackingId = placeOrder(formData.name, formData.phone, formData.address);
+
     setSuccessTrackingId(trackingId);
     setIsCheckoutSuccess(true);
     clearCart();
@@ -49,13 +54,18 @@ export default function CartDrawer() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
       
+      // Update incomplete order in background if they typed a phone
+      if (newData.phone && newData.phone.length >= 3) {
+         if (updateIncompleteOrder) updateIncompleteOrder(newData);
+      }
+      
       // Auto-fill existing customer details if phone matches
+
       if (name === 'phone' && value.length >= 11) {
         const existingOrder = orders.find(o => o.phone === value);
         if (existingOrder) {
@@ -161,6 +171,7 @@ export default function CartDrawer() {
                 />
               </div>
               
+                            
               <div>
                 <label htmlFor="address" className="block text-sm font-medium text-slate-700 mb-1">ডেলিভারি ঠিকানা <span className="text-red-500">*</span></label>
                 <textarea 
@@ -170,9 +181,9 @@ export default function CartDrawer() {
                   rows={3}
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm resize-none"
-                  placeholder="আপনার সম্পূর্ণ ঠিকানা বিস্তারিত লিখুন (বাড়ি নং, রাস্তা, এলাকা)"
-                ></textarea>
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm"
+                  placeholder="আপনার বিস্তারিত ঠিকানা লিখুন"
+                />
               </div>
               
               <div className="text-xs text-slate-500 mt-2 flex items-start gap-2 bg-gray-50 p-3 rounded-lg">

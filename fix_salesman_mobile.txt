@@ -1,9 +1,0 @@
-                      <div>
-                        <div className="font-extrabold text-slate-800 text-[15px] leading-normal">{order.customerName}</div>
-                        <div className="text-[12px] text-slate-500 font-bold mt-1 flex items-center justify-between">
-                          <span>{order.phone}</span>
-                          {order.salesman && (
-                            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-bold">এসআর: {order.salesman}</span>
-                          )}
-                        </div>
-                      </div>

@@ -1,3 +1,0 @@
-    { id: 'inventory', label: t.inventoryControl, icon: Package },
-    { id: 'create-order', label: 'সেলস / অর্ডার এন্ট্রি', icon: PlusCircle },
-    { id: 'orders', label: t.orders, icon: ShoppingBag, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
