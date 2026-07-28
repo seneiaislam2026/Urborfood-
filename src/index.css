@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'Bengali One';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/notosansbengali/v33/Cn-fJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mc4I3mYrtU3_I-n.woff2) format('woff2');
+  unicode-range: U+09E7;
+}
+@font-face {
+  font-family: 'Bengali One';
+  font-style: normal;
+  font-weight: 500;
+  src: url(https://fonts.gstatic.com/s/notosansbengali/v33/Cn-fJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mc4I3mYrtU3_I-n.woff2) format('woff2');
+  unicode-range: U+09E7;
+}
+@font-face {
+  font-family: 'Bengali One';
+  font-style: normal;
+  font-weight: 600;
+  src: url(https://fonts.gstatic.com/s/notosansbengali/v33/Cn-fJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mc4I3mYrtU3_I-n.woff2) format('woff2');
+  unicode-range: U+09E7;
+}
+@font-face {
+  font-family: 'Bengali One';
+  font-style: normal;
+  font-weight: 700;
+  src: url(https://fonts.gstatic.com/s/notosansbengali/v33/Cn-fJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mc4I3mYrtU3_I-n.woff2) format('woff2');
+  unicode-range: U+09E7;
+}
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #E05A1B;
+  --color-primary-dark: #B83E10;
+  --color-secondary: #1B4332;
+  --color-secondary-light: #2D6A4F;
+  
+  --font-sans: "Bengali One", "Hind Siliguri", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Bengali One", "Hind Siliguri", ui-serif, Georgia, serif;
+  --font-mono: "Bengali One", "Hind Siliguri", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  * {
+    font-family: "Bengali One", "Hind Siliguri", sans-serif !important;
+  }
+  body {
+    @apply antialiased bg-[#FDFCFB] text-slate-800;
+  }
+}
+
+@layer utilities {
+  .font-noto {
+    font-family: "Noto Sans Bengali", sans-serif !important;
+  }
+  .font-hind {
+    font-family: "Hind Siliguri", sans-serif !important;
+  }
+  .bn-safe {    
+    line-height: 1.5 !important;
+    overflow: visible !important;
+    padding-top: 0.25em;
+    padding-bottom: 0.1em;
+  }
+  span.bn-safe, a.bn-safe, label.bn-safe, p.bn-safe {
+    display: inline-block;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
