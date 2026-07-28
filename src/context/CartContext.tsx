@@ -5,6 +5,8 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocs, query, where }
 import { Product, Review } from '../types';
 import { toBanglaNumber } from '../utils/banglaHelpers';
 import { mockProducts, mockReviews } from '../data/mock';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
+
 
 
 export interface CartItem extends Product {
@@ -354,7 +356,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     if (!isClient) return true;
-    return localStorage.getItem('mega_sound_enabled') !== 'false';
+    return safeGetItem('mega_sound_enabled') !== 'false';
   });
 
   const [desktopPermission, setDesktopPermission] = useState<string>(() => {
@@ -383,7 +385,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Persist sound config
   useEffect(() => {
     if (isClient) {
-      localStorage.setItem('mega_sound_enabled', String(soundEnabled));
+      safeSetItem('mega_sound_enabled', String(soundEnabled));
     }
   }, [soundEnabled]);
 

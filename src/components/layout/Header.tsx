@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { ShoppingBag, Menu, X, Truck, User } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../../utils/storage';
+
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -15,9 +17,9 @@ export default function Header() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const checkAuth = () => {
-      setIsAdmin(localStorage.getItem('urbor_admin_auth') === 'true');
-      setIsCustomer(localStorage.getItem('urbor_customer_auth') === 'true');
-      setCustomerName(localStorage.getItem('urbor_customer_name') || 'গ্রাহক');
+      setIsAdmin(safeGetItem('urbor_admin_auth') === 'true');
+      setIsCustomer(safeGetItem('urbor_customer_auth') === 'true');
+      setCustomerName(safeGetItem('urbor_customer_name') || 'গ্রাহক');
       // setLogoUrl
     };
     
@@ -102,9 +104,9 @@ export default function Header() {
                 if (isAdmin) window.location.hash = '#admin';
                 else if (isCustomer) {
                   if(confirm('লগআউট করতে চান?')) {
-                    localStorage.removeItem('urbor_customer_auth');
-                    localStorage.removeItem('urbor_customer_phone');
-                    localStorage.removeItem('urbor_customer_name');
+                    safeRemoveItem('urbor_customer_auth');
+                    safeRemoveItem('urbor_customer_phone');
+                    safeRemoveItem('urbor_customer_name');
                     window.location.hash = '';
                     window.location.reload();
                   }
@@ -232,9 +234,9 @@ export default function Header() {
               if (isAdmin) window.location.hash = '#admin';
               else if (isCustomer) {
                   if(confirm('লগআউট করতে চান?')) {
-                    localStorage.removeItem('urbor_customer_auth');
-                    localStorage.removeItem('urbor_customer_phone');
-                    localStorage.removeItem('urbor_customer_name');
+                    safeRemoveItem('urbor_customer_auth');
+                    safeRemoveItem('urbor_customer_phone');
+                    safeRemoveItem('urbor_customer_name');
                     window.location.hash = '';
                     window.location.reload();
                   }

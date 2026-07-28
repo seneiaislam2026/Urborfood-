@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import ImageLoader from './ImageLoader';
 
 export default function CartDrawer() {
-  const { isCartOpen, setIsCartOpen, cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, placeOrder, orders, isCheckingOut, setIsCheckingOut } = useCart();
+  const { isCartOpen, setIsCartOpen, cartItems, updateQuantity, removeFromCart, cartTotal, clearCart, placeOrder, orders, isCheckingOut, setIsCheckingOut, updateIncompleteOrder, removeIncompleteOrder } = useCart();
   const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
   const [successTrackingId, setSuccessTrackingId] = useState('');
   const [copied, setCopied] = useState(false);

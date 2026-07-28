@@ -74,7 +74,7 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div><div id="error-log" style="color: red; padding: 20px; font-family: monospace; white-space: pre-wrap; z-index: 9999; position: relative;"></div><script>window.onerror = function(msg, url, lineNo, columnNo, error) { document.getElementById("error-log").innerText += msg + "\n" + (error ? error.stack : "") + "\n"; return false; }; window.addEventListener("unhandledrejection", function(event) { document.getElementById("error-log").innerText += "Promise Rejection: " + event.reason + "\n"; });</script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

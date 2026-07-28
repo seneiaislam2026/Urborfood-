@@ -67,6 +67,8 @@ import ImageLoader from '../components/ui/ImageLoader';
 import StaffManagement from '../components/admin/StaffManagement';
 import CategoryManagement from '../components/admin/CategoryManagement';
 import { POSInvoicePrint } from '../components/admin/POSInvoicePrint';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
+
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
@@ -95,14 +97,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const { heroBannerUrl, setHeroBannerUrl, logoUrl: ctxLogo, setLogoUrl: ctxSetLogo, updateSettingsInDB } = useUI();
   const [logoUrl, setLogoUrl] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('urbor_logo_url') || '/logo.svg';
+      return safeGetItem('urbor_logo_url') || '/logo.svg';
     }
     return '/logo.svg';
   });
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('urbor_admin_auth') === 'true';
+      return safeGetItem('urbor_admin_auth') === 'true';
     }
     return false;
   });
@@ -115,7 +117,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const handleLogoutClick = () => {
     setIsAuthenticated(false);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('urbor_admin_auth');
+      safeRemoveItem('urbor_admin_auth');
     }
     onLogout();
   };
@@ -127,7 +129,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedStaff = localStorage.getItem('urbor_staff_list');
+      const savedStaff = safeGetItem('urbor_staff_list');
       if (savedStaff) {
         try {
           setStaffList(JSON.parse(savedStaff));
@@ -291,7 +293,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     ];
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem('mega_transactions');
+        const stored = safeGetItem('mega_transactions');
         return stored ? JSON.parse(stored) : defaultVal;
       } catch (e) {
         console.error('Error parsing transactions:', e);
@@ -327,7 +329,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     ];
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem('mega_dues');
+        const stored = safeGetItem('mega_dues');
         return stored ? JSON.parse(stored) : defaultVal;
       } catch (e) {
         console.error('Error parsing dues:', e);
@@ -339,7 +341,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('mega_dues', JSON.stringify(dues));
+      safeSetItem('mega_dues', JSON.stringify(dues));
     }
   }, [dues]);
 
@@ -421,7 +423,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     ];
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem('mega_campaigns');
+        const stored = safeGetItem('mega_campaigns');
         return stored ? JSON.parse(stored) : defaultVal;
       } catch (e) {
         console.error('Error parsing campaigns:', e);
@@ -447,7 +449,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     ];
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem('mega_coupons');
+        const stored = safeGetItem('mega_coupons');
         return stored ? JSON.parse(stored) : defaultVal;
       } catch (e) {
         console.error('Error parsing coupons:', e);
@@ -460,13 +462,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Save campaigns & coupons to localStorage
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('mega_campaigns', JSON.stringify(campaigns));
+      safeSetItem('mega_campaigns', JSON.stringify(campaigns));
     }
   }, [campaigns]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('mega_coupons', JSON.stringify(coupons));
+      safeSetItem('mega_coupons', JSON.stringify(coupons));
     }
   }, [coupons]);
 
@@ -537,7 +539,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     if (isOldCreds || isNewCreds) {
       setIsAuthenticated(true);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('urbor_admin_auth', 'true');
+        safeSetItem('urbor_admin_auth', 'true');
       }
       setError('');
     } else {
@@ -1138,7 +1140,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={() => {
                     setIsAuthenticated(true);
                     if (typeof window !== 'undefined') {
-                      localStorage.setItem('urbor_admin_auth', 'true');
+                      safeSetItem('urbor_admin_auth', 'true');
                     }
                     setError('');
                   }}
