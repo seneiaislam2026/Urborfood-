@@ -4168,6 +4168,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         reader.onloadend = () => {
                           const base64 = reader.result as string;
                           setHeroBannerUrl(base64);
+                          safeSetItem('urbor_hero_banner', base64);
                           if (updateSettingsInDB) updateSettingsInDB({ heroBannerUrl: base64 });
                         };
                         reader.readAsDataURL(file);
@@ -4198,6 +4199,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           const base64 = reader.result as string;
                           setLogoUrl(base64);
                           if (ctxSetLogo) ctxSetLogo(base64);
+                          safeSetItem('urbor_logo_url', base64);
                           if (updateSettingsInDB) updateSettingsInDB({ logoUrl: base64 });
                           updatePWAIcon();
                         };

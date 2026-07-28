@@ -1,17 +1,10 @@
 import { useUI } from '../../context/UIContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const visualCategories = [
-  { name: 'খাঁটি মধু', image: 'https://images.unsplash.com/photo-1587049352847-4d43640b3701?auto=format&fit=crop&w=300&q=80', slug: 'honey', color: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900' },
-  { name: 'মজাদার আচার', image: 'https://images.unsplash.com/photo-1534482421-64566f976cfa?auto=format&fit=crop&w=300&q=80', slug: 'pickle', color: 'bg-red-50', border: 'border-red-200', text: 'text-red-900' },
-  { name: 'ফ্রোজেন ফুড', image: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=300&q=80', slug: 'frozen', color: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-900' },
-  { name: 'ঘি ও মাখন', image: 'https://images.unsplash.com/photo-1585237833075-84724ff08b02?auto=format&fit=crop&w=300&q=80', slug: 'dairy', color: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-900' },
-  { name: 'তেল ও মসলা', image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80', slug: 'oil-spice', color: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-900' },
-  { name: 'চাল ও ডাল', image: 'https://images.unsplash.com/photo-1586201375761-83865001e8ac?auto=format&fit=crop&w=300&q=80', slug: 'grocery', color: 'bg-green-50', border: 'border-green-200', text: 'text-green-900' },
-];
+
 
 export default function CategoriesGrid() {
-  const { setActiveCategory } = useUI();
+  const { setActiveCategory, categories } = useUI();
 
   return (
     <section className="py-8 sm:py-12 select-none bg-[#f8fafc]">
@@ -32,15 +25,15 @@ export default function CategoriesGrid() {
         </div>
         
         <div className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
-          {visualCategories.map((cat, i) => (
+          {categories.map((cat, i) => (
             <button 
               key={i} 
-              onClick={() => setActiveCategory(cat.slug)}
+              onClick={() => setActiveCategory(cat.id)}
               className="flex-shrink-0 flex items-center gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:border-emerald-500 hover:shadow-md cursor-pointer transition-all duration-300 group w-[180px] sm:w-[220px] text-left"
             >
               <div className={`w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] rounded-xl overflow-hidden shrink-0`}>
                  <img loading="lazy"
-                    src={cat.image}
+                    src={cat.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=200'}
                     alt={cat.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     referrerPolicy="no-referrer"

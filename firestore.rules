@@ -1,9 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Basic allow for testing
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if true; // Just for this simple project since no users are explicitly managed and there's no complex auth.
     }
   }
 }

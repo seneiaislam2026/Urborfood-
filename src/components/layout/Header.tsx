@@ -8,11 +8,11 @@ import { safeGetItem, safeSetItem, safeRemoveItem } from '../../utils/storage';
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount, setIsCartOpen } = useCart();
-  const { setActiveCategory, setIsOrderTrackingOpen, setIsPriceListOpen, setIsMyOrdersOpen, ctxLogo: ctxLogo } = useUI();
+  const { setActiveCategory, setIsOrderTrackingOpen, setIsPriceListOpen, setIsMyOrdersOpen, logoUrl: ctxLogo, categories } = useUI();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
   const [customerName, setCustomerName] = useState('');
-  // const [ctxLogo, setLogoUrl] = useState("/logo.jpg");
+  
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -20,7 +20,7 @@ export default function Header() {
       setIsAdmin(safeGetItem('urbor_admin_auth') === 'true');
       setIsCustomer(safeGetItem('urbor_customer_auth') === 'true');
       setCustomerName(safeGetItem('urbor_customer_name') || 'গ্রাহক');
-      // setLogoUrl
+      
     };
     
     checkAuth();
@@ -189,23 +189,14 @@ export default function Header() {
             <div className="mt-2 mb-1 px-4">
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2">ক্যাটাগরি সমূহ</h3>
               <div className="flex flex-col gap-1 pl-2">
-                {[
-                  { id: 'beef', label: '🥩 গরুর মাংস' },
-                  { id: 'chicken', label: '🍗 মুরগি' },
-                  { id: 'fish', label: '🐟 তাজা মাছ' },
-                  { id: 'egg', label: '🥚 ডিম' },
-                  { id: 'dairy', label: '🥛 ডেইরি' },
-                  { id: 'frozen', label: '🧊 ফ্রোজেন খাবার' },
-                  { id: 'grocery', label: '🌾 গ্রোসারি' },
-                  { id: 'vegetables', label: '🥬 শাকসবজি' },
-                  { id: 'beverage', label: '🥤 বেভারেজ' }
-                ].map(cat => (
+                {categories.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => { setActiveCategory(cat.id); window.location.hash = ''; setIsMobileMenuOpen(false); }}
-                    className="w-full text-left px-3 py-2.5 rounded-lg text-[15px] font-bold text-slate-600 hover:text-[#0b6132] hover:bg-emerald-50 transition-colors cursor-pointer"
+                    className="w-full text-left px-3 py-2.5 rounded-lg text-[15px] font-bold text-slate-600 hover:text-[#0b6132] hover:bg-emerald-50 transition-colors cursor-pointer flex items-center gap-2"
                   >
-                    {cat.label}
+                    {cat.image && <img src={cat.image} alt="icon" className="w-5 h-5 object-cover rounded" />}
+                    {cat.name}
                   </button>
                 ))}
               </div>

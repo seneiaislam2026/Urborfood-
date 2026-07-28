@@ -1,32 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, Plus, Trash2, Edit, Save, XCircle } from 'lucide-react';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../../utils/storage';
+import { useUI } from '../../context/UIContext';
 
 
 export default function CategoryManagement() {
-  const [categories, setCategories] = useState<{id: string, name: string, image?: string}[]>([]);
+  const { categories, setCategories } = useUI();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCategory, setNewCategory] = useState<{id: string, name: string, image?: string}>({ id: '', name: '', image: '' });
 
-  useEffect(() => {
-    const saved = safeGetItem('urbor_custom_categories');
-    if (saved) {
-      setCategories(JSON.parse(saved));
-    } else {
-      // Default categories mapping
-      setCategories([
-        { id: 'beef', name: 'গরুর মাংস' },
-        { id: 'chicken', name: 'মুরগি' },
-        { id: 'fish', name: 'তাজা মাছ' },
-        { id: 'egg', name: 'ডিম' },
-        { id: 'dairy', name: 'ডেইরি' },
-        { id: 'frozen', name: 'ফ্রোজেন খাবার' },
-        { id: 'grocery', name: 'গ্রোসারি' },
-        { id: 'vegetables', name: 'শাকসবজি' },
-        { id: 'beverage', name: 'বেভারেজ' }
-      ]);
-    }
-  }, []);
+
 
   const saveCategories = (cats: {id: string, name: string}[]) => {
     setCategories(cats);
