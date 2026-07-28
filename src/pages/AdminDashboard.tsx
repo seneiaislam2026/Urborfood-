@@ -1733,13 +1733,86 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <BarChart data={(() => {
                           const districtData: Record<string, number> = {};
                           orders.filter(o => o.status !== 'Cancelled').forEach(o => {
+                              
+                              const districts = [
+                                { bn: 'ঢাকা', en: ['dhaka'] },
+                                { bn: 'ফরিদপুর', en: ['faridpur'] },
+                                { bn: 'গাজীপুর', en: ['gazipur'] },
+                                { bn: 'গোপালগঞ্জ', en: ['gopalganj'] },
+                                { bn: 'কিশোরগঞ্জ', en: ['kishoreganj'] },
+                                { bn: 'মাদারীপুর', en: ['madaripur'] },
+                                { bn: 'মানিকগঞ্জ', en: ['manikganj'] },
+                                { bn: 'মুন্সীগঞ্জ', en: ['munshiganj'] },
+                                { bn: 'নারায়ণগঞ্জ', en: ['narayanganj'] },
+                                { bn: 'নরসিংদী', en: ['narsingdi'] },
+                                { bn: 'রাজবাড়ী', en: ['rajbari'] },
+                                { bn: 'শরীয়তপুর', en: ['shariatpur'] },
+                                { bn: 'টাঙ্গাইল', en: ['tangail'] },
+                                { bn: 'বগুড়া', en: ['bogra', 'bogura'] },
+                                { bn: 'জয়পুরহাট', en: ['joypurhat'] },
+                                { bn: 'নওগাঁ', en: ['naogaon'] },
+                                { bn: 'নাটোর', en: ['natore'] },
+                                { bn: 'চাঁপাইনবাবগঞ্জ', en: ['chapainawabganj', 'nawabganj'] },
+                                { bn: 'পাবনা', en: ['pabna'] },
+                                { bn: 'রাজশাহী', en: ['rajshahi'] },
+                                { bn: 'সিরাজগঞ্জ', en: ['sirajganj'] },
+                                { bn: 'দিনাজপুর', en: ['dinajpur'] },
+                                { bn: 'গাইবান্ধা', en: ['gaibandha'] },
+                                { bn: 'কুড়িগ্রাম', en: ['kurigram'] },
+                                { bn: 'লালমনিরহাট', en: ['lalmonirhat'] },
+                                { bn: 'নীলফামারী', en: ['nilphamari'] },
+                                { bn: 'পঞ্চগড়', en: ['panchagarh'] },
+                                { bn: 'রংপুর', en: ['rangpur'] },
+                                { bn: 'ঠাকুরগাঁও', en: ['thakurgaon'] },
+                                { bn: 'বরগুনা', en: ['barguna'] },
+                                { bn: 'বরিশাল', en: ['barishal', 'barisal'] },
+                                { bn: 'ভোলা', en: ['bhola'] },
+                                { bn: 'ঝালকাঠি', en: ['jhalokati', 'jhalakati'] },
+                                { bn: 'পটুয়াখালী', en: ['patuakhali'] },
+                                { bn: 'পিরোজপুর', en: ['pirojpur'] },
+                                { bn: 'বান্দরবান', en: ['bandarban'] },
+                                { bn: 'ব্রাহ্মণবাড়িয়া', en: ['brahmanbaria'] },
+                                { bn: 'চাঁদপুর', en: ['chandpur'] },
+                                { bn: 'চট্টগ্রাম', en: ['chattogram', 'chittagong'] },
+                                { bn: 'কুমিল্লা', en: ['cumilla', 'comilla'] },
+                                { bn: 'কক্সবাজার', en: ['coxs bazar', "cox's bazar", 'coxsbazar'] },
+                                { bn: 'ফেনী', en: ['feni'] },
+                                { bn: 'খাগড়াছড়ি', en: ['khagrachari'] },
+                                { bn: 'লক্ষ্মীপুর', en: ['lakshmipur', 'laxmipur'] },
+                                { bn: 'নোয়াখালী', en: ['noakhali'] },
+                                { bn: 'রাঙ্গামাটি', en: ['rangamati'] },
+                                { bn: 'হবিগঞ্জ', en: ['habiganj'] },
+                                { bn: 'মৌলভীবাজার', en: ['moulvibazar'] },
+                                { bn: 'সুনামগঞ্জ', en: ['sunamganj'] },
+                                { bn: 'সিলেট', en: ['sylhet'] },
+                                { bn: 'বাগেরহাট', en: ['bagerhat'] },
+                                { bn: 'চুয়াডাঙ্গা', en: ['chuadanga'] },
+                                { bn: 'যশোর', en: ['jashore', 'jessore'] },
+                                { bn: 'ঝিনাইদহ', en: ['jhenaidah'] },
+                                { bn: 'খুলনা', en: ['khulna'] },
+                                { bn: 'কুষ্টিয়া', en: ['kushtia'] },
+                                { bn: 'মাগুরা', en: ['magura'] },
+                                { bn: 'মেহেরপুর', en: ['meherpur'] },
+                                { bn: 'নড়াইল', en: ['narail'] },
+                                { bn: 'সাতক্ষীরা', en: ['satkhira'] },
+                                { bn: 'জামালপুর', en: ['jamalpur'] },
+                                { bn: 'ময়মনসিংহ', en: ['mymensingh'] },
+                                { bn: 'নেত্রকোনা', en: ['netrokona'] },
+                                { bn: 'শেরপুর', en: ['sherpur'] }
+                              ];
+                              
                               let dist = 'অজানা';
                               if (o.address) {
-                                  dist = o.address.split(',').pop()?.trim() || 'অন্যান্য';
+                                  const addrLower = o.address.toLowerCase();
+                                  for (const d of districts) {
+                                      if (addrLower.includes(d.bn) || d.en.some(eng => addrLower.includes(eng))) {
+                                          dist = d.bn;
+                                          break;
+                                      }
+                                  }
                               }
-                              // Limit district name length
-                              if (dist.length > 20) dist = dist.substring(0, 20) + '...';
-                              districtData[dist] = (districtData[dist] || 0) + 1;
+
+                              if (dist !== 'অজানা') { districtData[dist] = (districtData[dist] || 0) + 1; }
                           });
                           return Object.entries(districtData)
                               .map(([name, count]) => ({ name, count }))
