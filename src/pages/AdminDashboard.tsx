@@ -2502,9 +2502,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
               </div>
 
-              {/* Desktop view: Sleek 1-Screen Responsive Table */}
-              <div className="hidden md:block w-full overflow-hidden">
-                <table className="w-full text-left border-collapse text-xs font-medium table-fixed">
+                            {/* Desktop view: Sleek 1-Screen Responsive Table */}
+              <div className="hidden lg:block w-full overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs font-medium table-fixed min-w-[900px]">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[11px] tracking-wider select-none text-left font-semibold">
                       <th className="py-3.5 px-3 pl-4 w-[10%]">আইডি</th>
@@ -2519,16 +2519,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
                     {filteredOrdersList.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="p-10 text-center text-slate-400 font-medium">কোন সক্রিয় অর্ডার খুঁজে পাওয়া যায়নি।</td>
+                        <td colSpan={7} className="py-12 text-center text-slate-500">কোন সক্রিয় অর্ডার খুঁজে পাওয়া যায়নি।</td>
                       </tr>
                     ) : (
                       filteredOrdersList.map((order) => {
                         const isCompleted = order.status === 'Completed';
                         const isCancelled = order.status === 'Cancelled';
-                        const isShipped = order.status === 'Shipped';
-                        const isConfirmed = order.status === 'Confirmed';
                         const itemsSummary = order.items.map(it => `${it.name} (${it.quantity}x)`).join(', ');
-
                         return (
                           <tr key={order.id} className="hover:bg-slate-50/80 transition-colors h-14">
                             {/* Order ID */}
@@ -2537,7 +2534,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 #{order.id}
                               </span>
                             </td>
-
                             {/* Customer Info */}
                             <td className="py-2.5 px-3 align-middle">
                               <div className="min-w-0 pr-2">
@@ -2557,99 +2553,60 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 )}
                               </div>
                             </td>
-
                             {/* Delivery Address */}
                             <td className="py-2.5 px-3 align-middle">
                               <div className="text-xs text-slate-600 truncate pr-2 font-normal" title={order.address}>
                                 {order.address || 'ঠিকানা দেওয়া হয়নি'}
                               </div>
                             </td>
-
                             {/* Ordered Items */}
                             <td className="py-2.5 px-3 align-middle">
                               <div className="text-xs text-slate-700 font-medium truncate pr-2" title={itemsSummary}>
                                 {itemsSummary}
                               </div>
                             </td>
-
                             {/* Price */}
                             <td className="py-2.5 px-3 align-middle whitespace-nowrap">
                               <span className="text-xs font-bold text-slate-900">&nbsp;৳{order.total.toLocaleString('bn-BD')}</span>
                             </td>
-
                             {/* Status Selector */}
                             <td className="py-2.5 px-3 align-middle text-center select-none">
-                              
-<select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium outline-none focus:border-slate-900 bg-white cursor-pointer"><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="Confirmed">Confirmed</option><option value="Courier">Courier</option><option value="Delivered">Delivered</option><option value="Cancelled">Cancelled</option><option value="Return">Return</option></select>
-
+                              <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium outline-none focus:border-slate-900 bg-white cursor-pointer"><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="Confirmed">Confirmed</option><option value="Courier">Courier</option><option value="Delivered">Delivered</option><option value="Cancelled">Cancelled</option><option value="Return">Return</option></select>
                             </td>
-
                             {/* Quick Icon Actions */}
                             <td className="py-2.5 px-3 pr-4 align-middle text-center select-none">
-                              <div className="flex items-center justify-center gap-1">
-                                <button 
-                               onClick={() => setInvoiceToPrint(order)}
-                              className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors shrink-0 flex items-center gap-1"
-                            >
-                              <Printer size={12} /> ইনভয়েস
-                            </button>
-                            <button 
-                               onClick={() => setSelectedOrder(order)}
-                                  className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 cursor-pointer"
-                                  title="অর্ডার বিবরণ দেখুন"
-                                >
-                                  <Eye size={14} />
-                                </button>
-                                
-                                <button 
-                                  onClick={() => setInvoiceToPrint(order)}
-                                  className="p-1.5 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer"
-                                  title="ইনভয়েস প্রিন্ট করুন"
-                                >
-                                  <Printer size={14} />
-                                </button>
-
-                                {!isCompleted && !isCancelled && (
-                                  <button 
-                                    onClick={() => setBookingOrder(order)}
-                                    className="p-1.5 text-white bg-emerald-800 hover:bg-emerald-900 rounded-lg transition-all cursor-pointer"
-                                    title="কুরিয়ার বুকিং করুন"
-                                  >
-                                    <Truck size={14} />
-                                  </button>
-                                )}
-
-                                {!isStaff && (<button 
-                                  onClick={() => { if(confirm('অর্ডার রেকর্ডটি মুছে ফেলতে চান?')) deleteOrder(order.id); }}
-                                  className="p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer border border-rose-100"
-                                  title="অর্ডার ডিলিট করুন"
-                                >
-                                  <Trash2 size={14} />
-                                </button>)}
+                              <div className="flex items-center justify-center gap-1 flex-wrap w-24 mx-auto">
+                                <a href={`https://steadfast.com.bd/fraud-checker?phone=${order.phone}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-100 cursor-pointer" title="ফ্রড চেকার">
+                                  <ShieldAlert size={14} />
+                                </a>
+                                <button onClick={() => setSelectedOrder(order)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 cursor-pointer" title="অর্ডার বিবরণ দেখুন"><Eye size={14} /></button>
+                                <button onClick={() => setInvoiceToPrint(order)} className="p-1.5 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="ইনভয়েস প্রিন্ট করুন"><Printer size={14} /></button>
+                                {!isCompleted && !isCancelled && (<button onClick={() => setBookingOrder(order)} className="p-1.5 text-white bg-emerald-800 hover:bg-emerald-900 rounded-lg transition-all cursor-pointer" title="কুরিয়ার বুকিং করুন"><Truck size={14} /></button>)}
+                                {!isStaff && (<button onClick={() => { if(confirm('অর্ডার রেকর্ডটি মুছে ফেলতে চান?')) deleteOrder(order.id); }} className="p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer border border-rose-100" title="অর্ডার ডিলিট করুন"><Trash2 size={14} /></button>)}
                               </div>
                             </td>
                           </tr>
                         );
                       })
-                  )}
+                    )}
                   </tbody>
                 </table>
               </div>
 
-              {/* Mobile responsive view: beautiful stacked card list - NO horizontal scroll, pristine margins */}
-              <div className="block md:hidden space-y-4 pt-4">
+              {/* Mobile view: beautiful stacked card list */}
+              <div className="block lg:hidden space-y-4 pt-4 px-4 pb-4 bg-slate-50/50">
                 {filteredOrdersList.length === 0 ? (
                   <div className="p-12 text-center text-slate-500 font-medium">কোন সক্রিয় অর্ডার খুঁজে পাওয়া যায়নি।</div>
                 ) : (
                   filteredOrdersList.map((order) => (
-                    <div key={order.id} className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 p-5 flex flex-col gap-4 mx-4">
-                      {/* Card Header: Order ID & Status with compact typography */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-2 pb-3 border-b border-slate-100/80">
-                        <span className="text-[11px] text-slate-400 font-bold">#{order.id}</span>
+                    <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500/30 hover:shadow-md transition-all p-5 flex flex-col gap-4">
+                      {/* Card Header: Order ID & Status */}
+                      <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                        <span className="text-[12px] text-slate-800 font-black bg-slate-100 px-2 py-1 rounded">#{order.id}</span>
                         <span className={`inline-flex items-center text-center px-2.5 py-1.5 rounded-md text-[10px] font-black tracking-wide ${
                           order.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' :
-                              order.status === 'Shipped' ? 'bg-blue-50 text-blue-600 border border-blue-100/50' :
-                              order.status === 'Confirmed' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100/50' :
+                          order.status === 'Shipped' ? 'bg-blue-50 text-blue-600 border border-blue-100/50' :
+                          order.status === 'Confirmed' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100/50' :
                           order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100/50' :
                           'bg-amber-50 text-amber-600 border border-amber-100/50'
                         }`}>
@@ -2674,6 +2631,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         </div>
                       </div>
+
                       {/* Delivery Address */}
                       <div className="text-[12px] text-slate-600 bg-slate-50 py-3 px-4 rounded-xl border border-slate-100 font-bold leading-relaxed">
                         <span className="text-[10px] text-slate-400 block font-bold mb-1 uppercase tracking-wider">ডেলিভারি ঠিকানা:</span>
@@ -2688,39 +2646,64 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </p>
                       </div>
 
-                      {/* Total bill and Actions wrapper - Clean Alignment */}
-                      <div className="flex items-center justify-between mt-2 pt-4 border-t border-dashed border-slate-200/80">
-                        <div className="flex flex-col shrink-0 pr-3">
-                          <span className="text-[10px] text-slate-400 font-bold mb-0.5">মোট বিল</span>
-                          <span className="text-[16px] font-black text-slate-900 whitespace-nowrap">&nbsp;৳{order.total}</span>
+                      {/* Total bill and Actions wrapper */}
+                      <div className="mt-auto pt-4 border-t border-dashed border-slate-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-[11px] text-slate-500 font-bold">মোট বিল (COD)</span>
+                          <span className="text-[18px] font-black text-slate-900 whitespace-nowrap">৳{order.total}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                           <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-3 py-2.5 rounded-lg border border-slate-200 text-[11px] font-bold outline-none focus:border-emerald-500 bg-slate-50 text-slate-700 w-full cursor-pointer">
+                            <option value="Pending">Pending</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Courier">Courier</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                            <option value="Return">Return</option>
+                          </select>
+                          
+                          <a 
+                            href={`https://steadfast.com.bd/fraud-checker?phone=${order.phone}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer border border-purple-100"
+                          >
+                            <ShieldAlert size={14} /> ফ্রড চেকার
+                          </a>
                         </div>
 
-                        {/* Interactive mobile actions */}
+                        {/* Action buttons */}
                         <div className="flex flex-wrap items-center gap-2 justify-end w-full">
                           <button 
                             onClick={() => setSelectedOrder(order)}
-                            className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors shrink-0"
+                            className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg text-[11px] font-bold transition-colors shrink-0 flex items-center gap-1.5"
                           >
-                            বিবরণ
+                            <Eye size={14} /> বিবরণ
                           </button>
+                          
+                          <button
+                            onClick={() => setInvoiceToPrint(order)}
+                            className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-2 rounded-lg text-[11px] font-bold transition-colors shrink-0 flex items-center gap-1.5"
+                          >
+                            <Printer size={14} /> ইনভয়েস
+                          </button>
+
                           {order.status !== 'Completed' && (
                             <button 
                               onClick={() => setBookingOrder(order)}
-                              className="bg-[#0f172a] text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0"
+                              className="bg-[#0f172a] text-white hover:bg-slate-800 px-3 py-2 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0"
                             >
-                              <Truck size={12} /> বুকিং
+                              <Truck size={14} /> বুকিং
                             </button>
                           )}
                           
-<select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold outline-none focus:border-slate-900 bg-[#f8fafc] text-slate-700 w-full cursor-pointer"><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="Confirmed">Confirmed</option><option value="Courier">Courier</option><option value="Delivered">Delivered</option><option value="Cancelled">Cancelled</option><option value="Return">Return</option></select>
-
-
                           {!isStaff && (<button 
                             onClick={() => { if(confirm('অর্ডার রেকর্ডটি মুছে ফেলতে চান?')) deleteOrder(order.id); }}
                             className="text-rose-500 hover:text-white hover:bg-rose-500 bg-rose-50 p-2 rounded-lg transition-all cursor-pointer shrink-0"
                             title="অর্ডার ডিলিট"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>)}
                         </div>
                       </div>
@@ -2730,7 +2713,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             </div>
           )}
-
 
           {/* TAB 4: CUSTOMERS DIRECTORY */}
           {activeTab === 'customers' && (
@@ -4288,9 +4270,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Left Side: Customer & Product Input Form */}
-                <div className="lg:col-span-7 space-y-6">
+                <div className="lg:col-span-7 xl:col-span-8 space-y-6">
                   {/* Customer Info Card */}
                   <div className="bg-white p-5 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
                     <h3 className="font-bold text-[15px] text-slate-600 bn-safe">১. কাস্টমারের তথ্য</h3>
@@ -4467,7 +4449,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
 
                 {/* Right Side: Order Summary & Placement */}
-                <div className="lg:col-span-5 space-y-6">
+                <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-6 self-start">
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                     <div className="p-5 md:p-6 border-b border-slate-200/60 bg-emerald-50/30">
                       <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
@@ -4483,7 +4465,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           এখনো কোনো পণ্য যুক্ত করা হয়নি।
                         </div>
                       ) : (
-                        <div className="divide-y divide-slate-200/60 border border-slate-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
+                        <div className="divide-y divide-slate-200/60 border border-slate-200 rounded-xl overflow-hidden max-h-[50vh] overflow-y-auto">
                           {manualOrderItems.map((item, idx) => (
                             <div key={idx} className="p-3 bg-[#f8fafc]/40 flex items-center justify-between text-sm font-medium gap-3">
                               <div className="min-w-0 flex-1">
@@ -4594,7 +4576,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           // Switch to orders view
                           setActiveTab('orders');
                         }}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-sm font-bold text-xs py-3.5 rounded-xl cursor-pointer transition-all duration-200 shadow-md active:scale-98 flex items-center justify-center gap-1.5"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-sm font-bold text-sm py-3.5 rounded-xl cursor-pointer transition-all duration-200 shadow-md active:scale-98 flex items-center justify-center gap-1.5"
                       >
                         অর্ডার তৈরি সম্পন্ন করুন (Save Order)
                       </button>

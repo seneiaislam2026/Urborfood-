@@ -1,0 +1,1544 @@
+{/* TAB 4: CUSTOMERS DIRECTORY */}
+          {activeTab === 'customers' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                <div>
+                  <h3 className="font-semibold text-slate-800 text-sm md:text-base">কাস্টমার ডাটাবেস</h3>
+                  <p className="text-[10px] md:text-sm font-medium text-slate-500 mt-0.5">সব নিবন্ধিত ও ম্যানুয়াল কাস্টমারদের তালিকা</p>
+                </div>
+                <button 
+                  onClick={() => setIsAddCustomerModalOpen(true)}
+                  className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm px-4 py-2 rounded-xl text-[11px] md:text-sm font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                >
+                  <Users size={14} /> ম্যানুয়াল কাস্টমার যোগ করুন
+                </button>
+              </div>
+
+              {/* Dynamic Responsive Stats Grid for Customer Database */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { label: 'মোট নিবন্ধিত গ্রাহক', value: `${totalCustomersCount} জন`, countDesc: 'অনন্য কাস্টমার ফোন নম্বর', icBg: 'bg-emerald-50 text-emerald-500' },
+                  { label: 'মোট সম্পন্ন বিক্রয়', value: `৳${customersList.reduce((sum, c) => sum + c.totalSpent, 0).toLocaleString('bn-BD')}`, countDesc: 'সফলভাবে ডেলিভারি করা অর্ডার', icBg: 'bg-indigo-50 text-indigo-500' },
+                  { label: 'গ্রাহক প্রতি গড় ক্রয় মূল্য', value: `৳${totalCustomersCount > 0 ? Math.round(customersList.reduce((sum, c) => sum + c.totalSpent, 0) / totalCustomersCount).toLocaleString('bn-BD') : '০'}`, countDesc: 'অনন্য গ্রাহক প্রতি গড় শপিং', icBg: 'bg-purple-50 text-purple-500' },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-white rounded-xl p-4 md:p-5 border border-slate-200 flex flex-col justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)] min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] md:text-sm font-medium text-slate-500 uppercase tracking-wider truncate mr-1">{stat.label}</span>
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${stat.icBg}`}>
+                        <Users size={15} />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight leading-tight truncate">{stat.value}</h3>
+                      <p className="text-[9px] md:text-[10px] font-bold text-slate-500 mt-1.5 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block animate-pulse"></span>
+                        {stat.countDesc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+<div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-w-0">
+                <div className="p-4 md:p-5 border-b border-gray-100 bg-white sm:flex sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-base text-slate-800">গ্রাহক প্রোফাইল ডাটাবেজ সেন্টার</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">মোট {filteredCustomersList.length} জন গ্রাহক পাওয়া গেছে</p>
+                  </div>
+                  <div className="mt-4 sm:mt-0 relative w-full sm:max-w-xs shrink-0">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input 
+                      type="text" 
+                      placeholder="নাম বা মোবাইল নম্বর দিয়ে খুঁজুন..." 
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Desktop view: wide table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs md:text-sm font-medium min-w-[650px]">
+                    <thead>
+                      <tr className="bg-[#f8fafc] border-b border-slate-200 text-slate-500 uppercase text-[11px] text-left select-none">
+                        <th className="p-4 pl-6 text-xs font-semibold uppercase tracking-wider text-slate-500">গ্রাহক</th>
+                        <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">মোবাইল</th>
+                        <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">ঠিকানা</th>
+                        <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">অর্ডার সংখ্যা</th>
+                        <th className="p-4 pr-6 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">মোট ক্রয় (৳)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+                      {filteredCustomersList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="p-12 text-center text-slate-500 font-medium">কোন কাস্টমার প্রোফাইল পাওয়া যায়নি।</td>
+                        </tr>
+                      ) : (
+                        filteredCustomersList.map((customer, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50 transition-colors cursor-pointer group" onClick={() => setSelectedCustomerHistory({ phone: customer.phone, name: customer.name })}>
+                            <td className="p-4 pl-6">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0 uppercase">
+                                  {customer.name ? customer.name.charAt(0) : '?'}
+                                </div>
+                                <span className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">{customer.name}</span>
+                              </div>
+                            </td>
+                            <td className="p-4 tracking-wide text-slate-600">
+                              <a href={`tel:${customer.phone}`} onClick={(e) => e.stopPropagation()} className="hover:text-emerald-600 flex items-center gap-1.5 transition-colors">
+                                <Phone size={12} className="text-emerald-500" /> {customer.phone}
+                              </a>
+                            </td>
+                            <td className="p-4 text-slate-500 font-normal">
+                               <div className="max-w-[200px] truncate" title={customer.address}>{customer.address}</div>
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold inline-block min-w-[3rem]">
+                                {customer.ordersCount}
+                              </span>
+                            </td>
+                            <td className="p-4 pr-6 text-right">
+                              <div className="text-slate-900 font-bold text-[15px]">&nbsp;৳{customer.totalSpent > 0 ? customer.totalSpent.toLocaleString('bn-BD') : '০'}</div>
+                            </td>
+                          </tr>
+                        ))
+                  )}
+                    </tbody>
+                </table>
+                </div>
+
+                {/* Mobile responsive view: stacked cards for customers list */}
+                <div className="block md:hidden bg-slate-50/50 p-3 sm:p-4">
+                  <div className="flex flex-col gap-3">
+                    {filteredCustomersList.length === 0 ? (
+                      <div className="p-10 bg-white rounded-xl border border-slate-200 text-center text-slate-400 font-bold shadow-sm">কোন কাস্টমার পাওয়া যায়নি।</div>
+                    ) : (
+                      filteredCustomersList.map((customer, idx) => (
+                        <div key={idx} onClick={() => setSelectedCustomerHistory({ phone: customer.phone, name: customer.name })} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3 active:scale-[0.98] transition-all cursor-pointer">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                               <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-base shrink-0 uppercase">
+                                  {customer.name ? customer.name.charAt(0) : '?'}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="font-bold text-slate-900 text-[15px] truncate">{customer.name}</h4>
+                                  <div className="text-slate-500 text-xs font-medium tracking-wide mt-1">
+                                    <a href={`tel:${customer.phone}`} onClick={(e) => e.stopPropagation()} className="hover:text-emerald-600 flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md transition-colors w-max">
+                                      <Phone size={10} className="text-emerald-500" /> {customer.phone}
+                                    </a>
+                                  </div>
+                                </div>
+                            </div>
+                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-1 rounded-md text-[10px] font-bold shrink-0 whitespace-nowrap shadow-sm">
+                              {customer.ordersCount} টি অর্ডার
+                            </span>
+                          </div>
+                          
+                          <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-100 flex items-start gap-2">
+                             <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                             <p className="text-xs text-slate-600 font-medium leading-relaxed">{customer.address}</p>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">মোট ক্রয় মূল্য</span>
+                            <span className="text-base font-black text-slate-900 tracking-normal">&nbsp;৳{customer.totalSpent.toLocaleString('bn-BD')}</span>
+                          </div>
+                        </div>
+                      ))
+                  )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* TAB 6: FINANCES / INCOME & EXPENSE TRACKER */}
+          {activeTab === 'finances' && (() => {
+            const automatedIncome = orders
+              .filter(o => o.status === 'Completed')
+              .reduce((sum, o) => sum + o.total, 0);
+
+            const manualIncome = transactions
+              .filter(t => t.type === 'income')
+              .reduce((sum, t) => sum + t.amount, 0);
+
+            const totalIncome = automatedIncome + manualIncome;
+
+            const totalExpense = transactions
+              .filter(t => t.type === 'expense')
+              .reduce((sum, t) => sum + t.amount, 0);
+
+            const netProfit = totalIncome - totalExpense;
+
+            // Categories list depending on transaction type
+            const categoriesForType = txType === 'income' 
+              ? ['পণ্য বিক্রি', 'বিনিয়োগ', 'অন্যান্য আয়']
+              : ['কাঁচামাল কেনা', 'শিপিং চার্জ', 'দোকান ভাড়া', 'বিজ্ঞাপন', 'বেতন ও ভাতা', 'অন্যান্য ব্যয়'];
+
+            // Prepare dynamic mapping ledger
+            const orderIncomes = orders
+              .filter(o => o.status === 'Completed')
+              .map(o => ({
+                id: `order-${o.id}`,
+                type: 'income' as const,
+                category: 'পণ্য বিক্রি (অর্ডার)',
+                amount: o.total,
+                date: o.date,
+                note: `অর্ডার #${o.id} - ${o.customerName}`,
+                isAutomated: true
+              }));
+
+            const manualTx = transactions.map(t => ({
+              ...t,
+              isAutomated: false
+            }));
+
+            // Combine and filter ledger
+            const rawLedger = [...orderIncomes, ...manualTx];
+            const filteredLedger = rawLedger
+              .filter(item => {
+                // Search filter matching note or category
+                const matchesSearch = item.note.toLowerCase().includes(txSearch.toLowerCase()) || 
+                                      item.category.toLowerCase().includes(txSearch.toLowerCase());
+                
+                // Tab category filters
+                if (txFilter === 'income') return matchesSearch && item.type === 'income';
+                if (txFilter === 'expense') return matchesSearch && item.type === 'expense';
+                if (txFilter === 'automated') return matchesSearch && item.isAutomated;
+                return matchesSearch;
+              })
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+            // Handle transaction addition
+            const handleAddTransaction = (e: React.FormEvent) => {
+              e.preventDefault();
+              if (!txAmount || isNaN(Number(txAmount)) || Number(txAmount) <= 0) {
+                alert('অনুগ্রহ করে সঠিক টাকার পরিমাণ লিখুন।');
+                return;
+              }
+
+              const newTx = {
+                id: `tx-${Date.now()}`,
+                type: txType,
+                category: txCategory,
+                amount: Number(txAmount),
+                date: new Date().toISOString(),
+                note: txNote || `${txCategory} বাবদ লেনদেন`
+              };
+
+              setTransactions(prev => [newTx, ...prev]);
+              addNotification(
+                txType === 'income' ? 'নতুন আয় যুক্ত হয়েছে 💰' : 'নতুন ব্যয় যুক্ত হয়েছে 💸',
+                `${txCategory} বাবদ ৳${txAmount} টাকার লেনদেন সফলভাবে রেকর্ড করা হয়েছে।`
+              );
+              
+              // Play a sound
+              if (soundEnabled) {
+                triggerSound();
+              }
+
+              // Reset form
+              setTxAmount('');
+              setTxNote('');
+            };
+
+            const handleDeleteTx = (id: string) => {
+              setTransactions(prev => prev.filter(t => t.id !== id));
+              addNotification('লেনদেন মুছে ফেলা হয়েছে 🗑️', 'রেকর্ডকৃত লেনদেনটি সফলভাবে খাতা থেকে ডিলিট করা হয়েছে।');
+            };
+
+            return (
+              <div className="space-y-6">
+                
+                {/* 1. Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                  {/* Total Income Card */}
+                  <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">মোট সর্বমোট আয় (ইনকাম)</p>
+                      <h3 className="text-xl md:text-2xl font-bold text-emerald-600 mt-1">&nbsp;৳{totalIncome.toLocaleString('bn-BD')}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1 font-bold">
+                        অর্ডার আয়: ৳{automatedIncome.toLocaleString('bn-BD')} + ম্যানুয়াল: ৳{manualIncome.toLocaleString('bn-BD')}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                      <ArrowUpRight size={24} />
+                    </div>
+                  </div>
+
+                  {/* Total Expense Card */}
+                  <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">মোট সর্বমোট ব্যয় (খরচ)</p>
+                      <h3 className="text-xl md:text-2xl font-bold text-rose-600 mt-1">&nbsp;৳{totalExpense.toLocaleString('bn-BD')}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1 font-bold">
+                        মোট {transactions.filter(t => t.type === 'expense').length}টি ব্যয় খাতের হিসাব
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                      <ArrowDownRight size={24} />
+                    </div>
+                  </div>
+
+                  {/* Net Profit Card */}
+                  <div className={`rounded-xl p-5 border shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex items-center justify-between ${netProfit >= 0 ? 'bg-gradient-to-r from-emerald-50 to-teal-50/50 border-emerald-100 text-slate-800' : 'bg-rose-50 border-rose-100'}`}>
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">নিট লাভ / মুনাফা (Profit)</p>
+                      <h3 className={`text-xl md:text-2xl font-bold mt-1 ${netProfit >= 0 ? 'text-teal-800' : 'text-rose-700'}`}>
+                        &nbsp;৳{netProfit.toLocaleString('bn-BD')}
+                      </h3>
+                      <p className="text-[10px] text-slate-500 mt-1 font-bold">
+                        আয় এবং ব্যয়ের চূড়ান্ত ব্যালেন্স খাতা
+                      </p>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${netProfit >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                      <TrendingUp size={24} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Content Body Split */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  
+                  {/* Left Column: Transaction Ledger History */}
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm lg:col-span-8 flex flex-col min-w-0 overflow-hidden order-2 lg:order-1">
+                    <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gradient-to-r from-white to-slate-50/50">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100/50">
+                          <Wallet size={16} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-800">লেনদেন খতিয়ান ও বিবরণী</h4>
+                          <p className="text-[10px] text-slate-500 font-medium mt-0.5">রিয়েল-টাইমে ক্যাশ অন ডেলিভারি সেলস ম্যাপিং</p>
+                        </div>
+                      </div>
+
+                      {/* Ledger Search Input */}
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          placeholder="লেনদেন বা খাত খুঁজুন..." 
+                          value={txSearch}
+                          onChange={(e) => setTxSearch(e.target.value)}
+                          className="w-full sm:w-48 pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-emerald-600" 
+                        />
+                        <Search size={12} className="absolute left-2.5 top-2.5 text-slate-500" />
+                      </div>
+                    </div>
+
+                    {/* Filter Toggles */}
+                    <div className="px-5 py-3 bg-[#f8fafc] border-b border-slate-200 flex items-center gap-1.5 flex-wrap">
+                      <button 
+                        onClick={() => setTxFilter('all')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${txFilter === 'all' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200/60'}`}
+                      >
+                        সকল বিবরণী ({rawLedger.length}টি)
+                      </button>
+                      <button 
+                        onClick={() => setTxFilter('income')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${txFilter === 'income' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200/60'}`}
+                      >
+                        শুধুমাত্র আয় ({rawLedger.filter(l => l.type === 'income').length}টি)
+                      </button>
+                      <button 
+                        onClick={() => setTxFilter('automated')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${txFilter === 'automated' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200/60'}`}
+                      >
+                        অর্ডার থেকে আয় ({orderIncomes.length}টি)
+                      </button>
+                      <button 
+                        onClick={() => setTxFilter('expense')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${txFilter === 'expense' ? 'bg-rose-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200/60'}`}
+                      >
+                        শুধুমাত্র ব্যয় ({rawLedger.filter(l => l.type === 'expense').length}টি)
+                      </button>
+                    </div>
+
+                    {/* Ledger List */}
+                    <div className="divide-y divide-slate-200/60 overflow-y-auto max-h-[480px]">
+                      {filteredLedger.length === 0 ? (
+                        <div className="p-12 text-center text-slate-500 font-semibold flex flex-col items-center justify-center gap-2">
+                          <Wallet size={32} className="opacity-30" />
+                          <span>কোন লেনদেন রেকর্ড পাওয়া যায়নি।</span>
+                        </div>
+                      ) : (
+                        filteredLedger.map((item) => {
+                          const isInc = item.type === 'income';
+                          const isAut = (item as any).isAutomated;
+                          
+                          return (
+                            <div key={item.id} className="p-4 flex items-center justify-between gap-4 hover:bg-[#f8fafc]/50 transition-colors select-none">
+                              <div className="flex items-center gap-3 min-w-0">
+                                {/* Type icon */}
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${isInc ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'}`}>
+                                  {isInc ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                                </div>
+
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-medium text-slate-800 truncate">{item.note}</span>
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border uppercase tracking-wider ${
+                                      isAut ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                                      isInc ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+                                      'bg-rose-50 border-rose-100 text-rose-700'
+                                    }`}>
+                                      {item.category}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-[9px] text-slate-500 mt-1 font-bold">
+                                    <Calendar size={10} />
+                                    <span>{new Date(item.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                    {isAut && <span className="text-indigo-500 ml-1 bg-indigo-50 px-1 py-0.5 rounded">অটোমেটেড</span>}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className={`text-sm font-medium font-sans ${isInc ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                  {isInc ? '+' : '-'}৳{item.amount.toLocaleString('bn-BD')}
+                                </span>
+
+                                {!isAut ? (
+                                  <button 
+                                    onClick={() => handleDeleteTx(item.id)}
+                                    className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                    title="লেনদেন ডিলিট করুন"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                ) : (
+                                  <div className="p-1.5 text-slate-200" title="অটোমেটেড অর্ডার লেনদেন ডিলিট করা সম্ভব নয়">
+                                    <Lock size={12} className="opacity-40 font-bold" />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Add Transaction Form */}
+                  <div className="lg:col-span-4 space-y-6 order-1 lg:order-2">
+                    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                          <PlusCircle size={15} />
+                        </div>
+                        <h4 className="text-sm font-medium text-slate-800">নতুন লেনদেন রেকর্ড করুন</h4>
+                      </div>
+
+                      <form onSubmit={handleAddTransaction} className="space-y-4">
+                        {/* Transaction Type toggler */}
+                        <div>
+                          <label className="block text-[10px] text-slate-500 font-semibold uppercase mb-1.5">লেনদেনের ধরন</label>
+                          <div className="grid grid-cols-2 gap-2 bg-[#f8fafc] p-1 rounded-xl border border-slate-200">
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setTxType('income');
+                                setTxCategory('পণ্য বিক্রি');
+                              }}
+                              className={`py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${txType === 'income' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                            >
+                              আয় (Income)
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setTxType('expense');
+                                setTxCategory('কাঁচামাল কেনা');
+                              }}
+                              className={`py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${txType === 'expense' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                            >
+                              ব্যয় (Expense)
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Category Select */}
+                        <div>
+                          <label className="block text-[10px] text-slate-500 font-semibold uppercase mb-1.5">খাত / ক্যাটাগরি</label>
+                          
+<input type="text" value={txCategory} onChange={(e) => setTxCategory(e.target.value)} placeholder={txType === 'income' ? 'যেমন: পণ্য বিক্রি, বিনিয়োগ' : 'যেমন: কাঁচামাল কেনা, ডেলিভারি চার্জ'} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors" required />
+
+                        </div>
+
+                        {/* Amount Field */}
+                        <div>
+                          <label className="block text-[10px] text-slate-500 font-semibold uppercase mb-1.5">টাকার পরিমাণ (৳)</label>
+                          <div className="relative">
+                            <input 
+                              type="number" 
+                              required
+                              placeholder="১০০০" 
+                              value={txAmount}
+                              onChange={(e) => setTxAmount(e.target.value)}
+                              className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600"
+                            />
+                            <span className="absolute left-3 top-2.5 text-xs text-slate-500 font-medium">&nbsp;৳</span>
+                          </div>
+                        </div>
+
+                        {/* Note Field */}
+                        <div>
+                          <label className="block text-[10px] text-slate-500 font-semibold uppercase mb-1.5">লেনদেনের নোট / বিবরণ</label>
+                          <input 
+                            type="text" 
+                            placeholder="যেমন: ডেলিভারি খরচ পরিশোধ, দোকানের ভাড়া" 
+                            value={txNote}
+                            onChange={(e) => setTxNote(e.target.value)}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:border-emerald-600"
+                          />
+                        </div>
+
+                        {/* Submit Button */}
+                        <button 
+                          type="submit"
+                          className={`w-full py-2.5 rounded-xl text-white text-sm font-medium transition-all cursor-pointer shadow-md ${txType === 'income' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-rose-600 hover:bg-rose-700'}`}
+                        >
+                          খাতায় হিসাব যুক্ত করুন
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Quick Financial Insight Info Card */}
+                    <div className="bg-slate-900 text-white rounded-xl p-5 border border-slate-800 shadow-sm leading-relaxed">
+                      <h4 className="text-sm font-medium text-emerald-400 flex items-center gap-1.5 mb-2">
+                        <span>💡 হিসাব রক্ষণ টিপস</span>
+                      </h4>
+                      <p className="text-[10px] text-slate-300 font-bold">
+                        অর্ডার সমূহের মধ্যে যেগুলোর স্ট্যাটাস <span className="text-emerald-300 font-bold">"সম্পন্ন"</span> করা হয়, সেগুলো স্বয়ংক্রিয়ভাবে আয় হিসেবে লেনদেন তালিকায় যুক্ত হয়। অন্যান্য খরচ যেমন পণ্য উৎপাদন, শিপিং খরচ, ও আনুষঙ্গিক ব্যয়সমূহ ডান পাশের ফরম ব্যবহার করে যুক্ত করলে সঠিক নিট মুনাফার হিসাব বজায় থাকবে।
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            );
+          })()}
+
+
+          {/* TAB: MARKETING & DISCOUNT INTELLIGENCE */}
+          {activeTab === 'marketing' && (() => {
+            // Calculations
+            const totalCampBudget = campaigns.reduce((sum, c) => sum + c.budget, 0);
+            const totalConversions = campaigns.reduce((sum, c) => sum + c.conversions, 0);
+            const activeCampaignsCount = campaigns.filter(c => c.status === 'Active').length;
+            
+            const totalRevenue = orders
+              .filter(o => o.status === 'Completed')
+              .reduce((sum, o) => sum + o.total, 0);
+            
+            // Recommend budget: 7% of total completed revenue, minimum 2000
+            const recommendedBudget = Math.max(2000, Math.round(totalRevenue * 0.07));
+
+            // Customer Loyalty Intelligence: Analyze real orders list
+            const customerStats: { [phone: string]: { name: string; address: string; count: number; spend: number } } = {};
+            orders.forEach(o => {
+              if (!o.phone) return;
+              if (!customerStats[o.phone]) {
+                customerStats[o.phone] = { name: o.customerName, address: o.address, count: 0, spend: 0 };
+              }
+              customerStats[o.phone].count += 1;
+              customerStats[o.phone].spend += o.total;
+            });
+
+            const customerList = Object.entries(customerStats).map(([phone, stats]) => ({
+              phone,
+              ...stats
+            }));
+
+            // Categories
+            const vipCustomers = customerList.filter(c => c.count >= 2 || c.spend >= 2500);
+            const oneTimeCustomers = customerList.filter(c => c.count === 1 && c.spend < 2500);
+
+            return (
+              <div className="space-y-6">
+                
+                {/* 1. Marketing Performance Overview Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-200">
+                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-100 p-5 rounded-xl shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] md:text-xs text-emerald-700/80 font-bold uppercase tracking-wider">চলতি বাজেট ব্যয়</span>
+                        <h3 className="text-xl md:text-2xl font-bold text-emerald-900 mt-1">&nbsp;৳{totalCampBudget.toLocaleString('bn-BD')}</h3>
+                      </div>
+                      <div className="p-2.5 bg-emerald-500 text-white rounded-xl">
+                        <Megaphone size={16} />
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-emerald-700 font-bold mt-2.5 flex items-center gap-1">
+                      <span>• মোট {campaigns.length}টি ক্যাম্পেইন অন্তর্ভুক্ত</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 p-5 rounded-xl shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] md:text-xs text-blue-700/80 font-bold uppercase tracking-wider">মোট কনভার্সন (অর্ডার)</span>
+                        <h3 className="text-xl md:text-2xl font-bold text-blue-900 mt-1">{totalConversions.toLocaleString('bn-BD')} টি</h3>
+                      </div>
+                      <div className="p-2.5 bg-blue-500 text-white rounded-xl">
+                        <Target size={16} />
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-blue-700 font-bold mt-2.5 flex items-center gap-1">
+                      <span>• গড় রূপান্তর হার: ১২.৫% (ফেসবুক)</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100 p-5 rounded-xl shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] md:text-xs text-amber-700/80 font-bold uppercase tracking-wider">সক্রিয় ক্যাম্পেইন</span>
+                        <h3 className="text-xl md:text-2xl font-bold text-amber-900 mt-1">{activeCampaignsCount.toLocaleString('bn-BD')} টি</h3>
+                      </div>
+                      <div className="p-2.5 bg-amber-500 text-white rounded-xl">
+                        <Sparkles size={16} />
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-amber-700 font-bold mt-2.5 flex items-center gap-1">
+                      <span>• রানিং প্রমোশন ও বুস্টিং চলছে</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-100 p-5 rounded-xl shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] md:text-xs text-purple-700/80 font-bold uppercase tracking-wider">প্রস্তাবিত মার্কেটিং বাজেট</span>
+                        <h3 className="text-xl md:text-2xl font-bold text-purple-900 mt-1">&nbsp;৳{recommendedBudget.toLocaleString('bn-BD')}</h3>
+                      </div>
+                      <div className="p-2.5 bg-purple-500 text-white rounded-xl">
+                        <TrendingUp size={16} />
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-purple-700 font-bold mt-2.5 flex items-center gap-1">
+                      <span>• মোট সম্পন্ন আয়ের ৭% হিসাব ভিত্তিক</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Bento Grid: Timings & Guidance and Customer Recommendations */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  
+                  {/* Left Column: Timing guidance and budget advice - 5 cols */}
+                  <div className="lg:col-span-5 space-y-5">
+                    
+                    {/* A. কখন কতটুকু মার্কেটিং করা দরকার? (Timing Guidance Card) */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                      <h3 className="font-semibold text-sm md:text-base text-slate-800 flex items-center gap-2 pb-3 border-b border-slate-200 select-none">
+                        <Calendar size={18} className="text-emerald-600 animate-pulse" />
+                        <span>কখন কতটুকু মার্কেটিং করা প্রয়োজন?</span>
+                      </h3>
+                      
+                      <div className="space-y-3.5">
+                        <div className="flex gap-3">
+                          <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-700 bn-safe">১</div>
+                          <div>
+                            <h4 className="text-sm font-medium text-slate-800 bn-safe">মাসের বেতন সেশন (১ থেকে ১০ তারিখ)</h4>
+                            <p className="text-[10.5px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                              এই সময়ে ক্রেতাদের ক্রয়ক্ষমতা সর্বোচ্চ থাকে। আপনার সম্পূর্ণ মাসিক বাজেটের <span className="text-emerald-600 font-bold bn-safe">৫০% থেকে ৬০%</span> এই ১০ দিনে খরচ করা উচিত। বিশেষ করে ঘি, সুন্দরবনের মধু এবং সরিষার তেলের মতো প্রিমিয়াম খাদ্য আইটেমগুলোর বুস্ট সচল করুন।
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-700 bn-safe">২</div>
+                          <div>
+                            <h4 className="text-sm font-medium text-slate-800 bn-safe">দৈনিক পিক-আওয়ার (সন্ধ্যা ৬:০০ - রাত ১০:০০)</h4>
+                            <p className="text-[10.5px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                              অর্গানিক খাবার ও গ্রোসারির ফেসবুকে সবচেয়ে বেশি অর্ডার আসে বিকেলে ও রাতে। আপনার বিজ্ঞাপন ক্যাম্পেইনগুলো রাতে একটিভ রাখুন এবং মেসেঞ্জার চ্যাটে ইনস্ট্যান্ট রিপ্লাই সচল রাখুন।
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-700">৩</div>
+                          <div>
+                            <h4 className="text-sm font-medium text-slate-800">উৎসবে স্পেশাল বাজেট (রমজান ও ঈদ সেশন)</h4>
+                            <p className="text-[10.5px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                              রমজান বা যেকোনো উৎসবে বিশেষ বাজেট বরাদ্দ করুন। উৎসবের দিনগুলোতে খাঁটি উপাদানের চাহিদা অনেক বেড়ে যায়।
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Customer Recommendations / Segments */}
+                  <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                    <h3 className="font-semibold text-sm md:text-base text-slate-800 flex items-center gap-2 pb-3 border-b border-slate-200 select-none">
+                      <Users size={18} className="text-emerald-600 animate-pulse" />
+                      <span>গ্রাহক সেগমেন্ট ভিত্তিক কুপন অফার</span>
+                    </h3>
+                    
+                    <div className="space-y-4">
+                        
+                        {/* Segment 1: VIP Loyal Spenders */}
+                        <div>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                            <span className="text-[11px] font-bold text-emerald-900 bg-emerald-50 px-2.5 py-1 rounded-lg flex items-center gap-1 self-start shadow-sm border border-emerald-100">
+                              👑 ভিআইপি কাস্টমার (Loyal Customers)
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium sm:text-right">প্রস্তাবিত ডিসকাউন্ট: ১০% বা ফ্ল্যাট ৳১৫০ ছাড়</span>
+                          </div>
+                          
+                          {vipCustomers.length === 0 ? (
+                            <p className="text-[10px] text-slate-500 font-medium bg-[#f8fafc] p-3 rounded-xl border border-dashed">এখনো পর্যন্ত কোন কাস্টমার ভিআইপি ক্যাটাগরিতে পৌঁছায়নি (২+ অর্ডার বা ৳২৫০০+ ক্রয়)।</p>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                              {vipCustomers.map(cust => (
+                                <div key={cust.phone} className="p-3 bg-gradient-to-r from-emerald-500/[0.04] to-emerald-500/[0.01] border border-emerald-500/10 hover:border-emerald-500/25 rounded-xl flex items-center justify-between gap-3 hover:bg-emerald-500/[0.06] transition-all duration-300 shadow-sm">
+                                  <div className="min-w-0 flex-1">
+                                    <span className="text-sm font-medium text-slate-800 block truncate leading-normal">{cust.name}</span>
+                                    <span className="text-[10px] text-slate-500  block mt-0.5">{cust.phone}</span>
+                                    <div className="text-[9px] text-emerald-800 font-bold mt-1.5 flex items-center gap-1">
+                                      <span>অর্ডার: <strong className="font-semibold  text-[10.5px] text-emerald-600">{cust.count}</strong>টি</span>
+                                      <span className="text-slate-300">•</span>
+                                      <span>ক্রয়: <strong className="font-semibold  text-[10.5px] text-emerald-600">&nbsp;৳{cust.spend}</strong></span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const cleanName = cust.name.replace(/[^a-zA-Z]/g, '').slice(0, 5) || 'VIP';
+                                      const code = `VIP${cleanName.toUpperCase()}`;
+                                      const exist = coupons.some(c => c.code === code);
+                                      if (exist) {
+                                        alert('এই ডিসকাউন্ট কুপন ইতিমধ্যে তৈরি করা আছে!');
+                                        return;
+                                      }
+                                      setCoupons(prev => [{
+                                        code,
+                                        type: 'fixed',
+                                        value: 150,
+                                        minSpend: 1500,
+                                        expiryDate: '2026-12-31',
+                                        usageCount: 0
+                                      }, ...prev]);
+                                      addNotification(
+                                        'ভিআইপি স্পেশাল কুপন 🎫',
+                                        `${cust.name} এর জন্য বিশেষ ডিসকাউন্ট কোড "${code}" সচল করা হয়েছে।`
+                                      );
+                                      alert(`কুপন কোড ${code} তৈরি করা হয়েছে এবং SMS/মেসেঞ্জারে কাস্টমারকে পাঠানোর জন্য রেডি!`);
+                                    }}
+                                    className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm text-[9px] px-3 py-1.5 rounded-lg font-bold shrink-0 transition-all duration-200 active:scale-95 shadow-sm shadow-emerald-600/10"
+                                  >
+                                    কুপন দিন
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Segment 2: One-time welcome discount */}
+                        <div>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                            <span className="text-[11px] font-bold text-blue-950 bg-blue-50 px-2.5 py-1 rounded-lg flex items-center gap-1 self-start shadow-sm border border-blue-100">
+                              👋 ১ বার কেনা ক্রেতা (Winback Segment)
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium sm:text-right">প্রস্তাবিত ডিসকাউন্ট: ফ্রি ডেলিভারি কুপন</span>
+                          </div>
+                          
+                          {oneTimeCustomers.length === 0 ? (
+                            <p className="text-[10px] text-slate-500 font-medium bg-[#f8fafc] p-3 rounded-xl border border-dashed bn-safe">১ বার কিনেছেন এমন কোন কাস্টমার লিস্টে নেই।</p>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                              {oneTimeCustomers.map(cust => (
+                                <div key={cust.phone} className="p-3 bg-gradient-to-r from-blue-500/[0.04] to-blue-500/[0.01] border border-blue-500/10 hover:border-blue-500/25 rounded-xl flex items-center justify-between gap-3 hover:bg-blue-500/[0.06] transition-all duration-300 shadow-sm">
+                                  <div className="min-w-0 flex-1">
+                                    <span className="text-sm font-medium text-slate-800 block truncate leading-normal">{cust.name}</span>
+                                    <span className="text-[10px] text-slate-500  block mt-0.5">{cust.phone}</span>
+                                    <div className="text-[9px] text-blue-800 font-bold mt-1.5 flex items-center gap-1">
+                                      <span>অर्डर: <strong className="font-semibold  text-[10.5px] text-blue-700">{cust.count}</strong>টি</span>
+                                      <span className="text-slate-300">•</span>
+                                      <span>ক্রয়: <strong className="font-semibold  text-[10.5px] text-blue-700">&nbsp;৳{cust.spend}</strong></span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const code = `WELCOME60`;
+                                      const exist = coupons.some(c => c.code === code);
+                                      if (exist) {
+                                        alert('এই ডিসকাউন্ট কুপন ইতিমধ্যে তৈরি করা আছে!');
+                                        return;
+                                      }
+                                      setCoupons(prev => [{
+                                        code,
+                                        type: 'fixed',
+                                        value: 60, // delivery fee amount
+                                        minSpend: 800,
+                                        expiryDate: '2026-12-31',
+                                        usageCount: 0
+                                      }, ...prev]);
+                                      addNotification(
+                                        'উইনব্যাক ফ্রি ডেলিভারি কুপন 🚚',
+                                        `পুরাতন খদ্দেরদের পুনরায় টানতে "${code}" কোড তৈরি করা হয়েছে।`
+                                      );
+                                      alert(`কুপন কোড ${code} তৈরি করা হয়েছে! এটি ১ বার কেনা গ্রাহকদের রিপিট ক্রয়ে উৎসাহিত করবে।`);
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white text-[9px] px-3 py-1.5 rounded-lg font-bold shrink-0 transition-all duration-200 active:scale-95 shadow-sm shadow-blue-600/10"
+                                  >
+                                    ফ্রি শিপিং
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+                    </div>
+
+                    {/* D. একটিভ মার্কেটিং ক্যাম্পেইন তালিকা ও ফর্ম */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                      <div className="flex justify-between items-center pb-3 border-b border-slate-200">
+                        <h3 className="font-semibold text-sm md:text-base text-slate-800 flex items-center gap-2">
+                          <Megaphone size={18} className="text-emerald-600" />
+                          <span>মার্কেটিং ক্যাম্পেইন বাজেট ও আরওআই ট্র্যাকার</span>
+                        </h3>
+                        <span className="text-sm font-medium text-slate-500">বাজেট বণ্টন তালিকা</span>
+                      </div>
+
+                      {/* Add Campaign Form */}
+                      <form 
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!newCampName || !newCampBudget) return;
+
+                          const budg = Number(newCampBudget) || 1000;
+                          const newCampObj = {
+                            id: `c-${Math.floor(100 + Math.random() * 900)}`,
+                            name: newCampName,
+                            platform: newCampPlatform,
+                            budget: budg,
+                            targetAudience: newCampTarget || 'নির্ধারিত কাস্টমার অডিয়েন্স',
+                            conversions: 0,
+                            status: newCampStatus,
+                            date: new Date().toISOString(),
+                            roi: 0
+                          };
+
+                          setCampaigns(prev => [newCampObj, ...prev]);
+                          setNewCampName('');
+                          setNewCampBudget('');
+                          setNewCampTarget('');
+
+                          addNotification(
+                            'নতুন প্রমোショナル ক্যাম্পেইন 📣',
+                            `ক্যাম্পেইন "${newCampObj.name}" বাজেট ৳${budg} সফলভাবে রানিং করা হয়েছে।`
+                          );
+                        }}
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 bg-[#f8fafc] p-4 rounded-xl border border-slate-200/60"
+                      >
+                        <div className="col-span-1 sm:col-span-2 md:col-span-3">
+                          <h4 className="text-[11px] uppercase tracking-wider text-slate-500 font-medium mb-1">ক্যাম্পেইন যুক্ত করুন</h4>
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-slate-500 font-medium mb-1">ক্যাম্পেইনের নাম *</label>
+                          <input 
+                            type="text"
+                            required
+                            placeholder="যেমন: ঘি বুস্টিং অফার"
+                            value={newCampName}
+                            onChange={(e) => setNewCampName(e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm font-medium bg-white outline-none focus:border-emerald-600"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-slate-500 font-medium mb-1">প্ল্যাটফর্ম</label>
+                          
+<select value={newCampPlatform} onChange={(e) => setNewCampPlatform(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-[#f8fafc] focus:bg-white focus:border-emerald-600 transition-colors cursor-pointer"><option value="Facebook Ads">Facebook Ads</option><option value="Google Ads">Google Ads</option><option value="Instagram Ads">Instagram Ads</option><option value="SMS Marketing">SMS Marketing</option><option value="Others">Others</option></select>
+
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-slate-500 font-medium mb-1">বাজেট (৳) *</label>
+                          <input 
+                            type="number"
+                            required
+                            placeholder="যেমন: ১৫০০"
+                            value={newCampBudget}
+                            onChange={(e) => setNewCampBudget(e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm font-medium bg-white outline-none focus:border-emerald-600"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-[9px] text-slate-500 font-medium mb-1">টার্গেট কাস্টমার বিবরণ</label>
+                          <input 
+                            type="text"
+                            placeholder="যেমন: ঢাকা সিটির খাঁটি খাবারের আগ্রহী পরিবার"
+                            value={newCampTarget}
+                            onChange={(e) => setNewCampTarget(e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm font-medium bg-white outline-none focus:border-emerald-600"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-slate-500 font-medium mb-1">স্ট্যাটাস</label>
+                          
+<select value={newCampStatus} onChange={(e) => setNewCampStatus(e.target.value as any)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-[#f8fafc] focus:bg-white focus:border-emerald-600 transition-colors cursor-pointer"><option value="Active">Active</option><option value="Paused">Paused</option><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option></select>
+
+                        </div>
+                        <div className="col-span-1 sm:col-span-2 md:col-span-3 pt-2">
+                          <button
+                            type="submit"
+                            className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-sm text-sm font-medium py-2 rounded-xl shadow-sm transition-all"
+                          >
+                            📣 নতুন ক্যাম্পেইন সেভ করুন
+                          </button>
+                        </div>
+                      </form>
+
+                      {/* Campaigns Tracker Responsive Layout */}
+                      {/* Mobile View: Vertical Cards (No Horizontal Scrolling) */}
+                      <div className="block md:hidden space-y-4">
+                        {campaigns.length === 0 ? (
+                          <div className="p-8 text-center bg-[#f8fafc] border border-dashed rounded-xl text-slate-500 font-medium text-xs">
+                            কোন ক্যাম্পেইন পাওয়া যায়নি।
+                          </div>
+                        ) : (
+                          campaigns.map((camp) => (
+                            <div key={camp.id} className="bg-[#f8fafc]/70 border border-slate-200/80 rounded-xl p-4.5 space-y-3 shadow-sm hover:border-emerald-500/30 transition-all">
+                              <div className="flex items-start justify-between gap-3 pb-2.5 border-b border-slate-200/50">
+                                <div>
+                                  <h4 className="text-xs sm:text-sm font-bold text-slate-800 leading-normal">{camp.name}</h4>
+                                  <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">{camp.platform}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (confirm('ক্যাম্পেইনটি ডিলিট করতে চান?')) {
+                                      setCampaigns(prev => prev.filter(c => c.id !== camp.id));
+                                    }
+                                  }}
+                                  className="text-slate-500 hover:text-rose-600 p-1.5 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3 text-[11px]">
+                                <div className="space-y-0.5">
+                                  <span className="text-slate-500 font-medium block text-[10px]">বাজেট</span>
+                                  <span className="font-semibold text-emerald-900 text-xs">&nbsp;৳{camp.budget}</span>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <span className="text-slate-500 font-medium block text-[10px]">টার্গেট অডিয়েন্স</span>
+                                  <span className="font-semibold text-slate-600 block truncate" title={camp.targetAudience}>{camp.targetAudience}</span>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <span className="text-slate-500 font-medium block text-[10px]">অর্ডার কনভার্সন</span>
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-bold text-slate-800">{camp.conversions} টি</span>
+                                    <button 
+                                      type="button"
+                                      onClick={() => {
+                                        const count = prompt('নতুন কনভার্সন অর্ডার সংখ্যা লিখুন:', String(camp.conversions));
+                                        if (count === null) return;
+                                        const num = Number(count);
+                                        if (isNaN(num)) return;
+                                        
+                                        // Update ROI too: each conversion is worth on average 1500 Taka
+                                        const aovValue = num * 1500;
+                                        const calculatedRoi = camp.budget > 0 ? Number((aovValue / camp.budget).toFixed(1)) : 0;
+
+                                        setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, conversions: num, roi: calculatedRoi } : c));
+                                      }}
+                                      className="text-[10px] text-blue-600 hover:underline font-semibold"
+                                    >
+                                      (সংশোধন)
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <span className="text-slate-500 font-medium block text-[10px]">আরওআই (ROI)</span>
+                                  <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${camp.roi > 2 ? 'bg-emerald-500/20 text-emerald-400' : camp.roi > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-200/80 text-slate-500'}`}>
+                                    {camp.roi > 0 ? `${camp.roi}x ROI` : 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="pt-2.5 border-t border-slate-200/50 flex items-center justify-between gap-3">
+                                <span className="text-[10px] text-slate-500 font-medium uppercase">স্ট্যাটাস</span>
+                                
+<select value={camp.status} onChange={(e) => setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: e.target.value as any } : c))} className="px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium outline-none focus:border-emerald-600 bg-white cursor-pointer"><option value="Active">Active</option><option value="Paused">Paused</option><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option></select>
+
+                              </div>
+                            </div>
+                          ))
+                  )}
+                      </div>
+
+                      {/* Desktop View: Beautiful Structured Table (Visible on MD and larger screens) */}
+                      <div className="hidden md:block overflow-x-auto border border-slate-200 rounded-xl">
+                        <table className="w-full text-left border-collapse text-xs font-medium min-w-[550px] bg-[#f8fafc]/50">
+                          <thead>
+                            <tr className="bg-slate-100 text-slate-600 text-[10px]">
+                              <th className="p-3">ক্যাম্পেইন নাম ও প্ল্যাটফর্ম</th>
+                              <th className="p-3">বাজেট</th>
+                              <th className="p-3">টার্গেট অডিয়েন্স</th>
+                              <th className="p-3">অর্ডার কনভার্সন</th>
+                              <th className="p-3">আরওআই (ROI)</th>
+                              <th className="p-3 text-center">স্ট্যাটাস</th>
+                              <th className="p-3">অ্যাকশন</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200/60">
+                            {campaigns.map((camp) => (
+                              <tr key={camp.id} className="hover:bg-white transition-colors">
+                                <td className="p-3">
+                                  <span className="text-slate-800 block font-bold">{camp.name}</span>
+                                  <span className="text-[10px] text-slate-500">{camp.platform}</span>
+                                </td>
+                                <td className="p-3 font-medium text-emerald-900">&nbsp;৳{camp.budget}</td>
+                                <td className="p-3 text-[10px] text-slate-500 max-w-[120px] truncate" title={camp.targetAudience}>{camp.targetAudience}</td>
+                                <td className="p-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-slate-800 font-bold">{camp.conversions} টি</span>
+                                    <button 
+                                      type="button"
+                                      onClick={() => {
+                                        const count = prompt('নতুন কনভার্সন অর্ডার সংখ্যা লিখুন:', String(camp.conversions));
+                                        if (count === null) return;
+                                        const num = Number(count);
+                                        if (isNaN(num)) return;
+                                        
+                                        // Update ROI too: each conversion is worth on average 1500 Taka
+                                        const aovValue = num * 1500;
+                                        const calculatedRoi = camp.budget > 0 ? Number((aovValue / camp.budget).toFixed(1)) : 0;
+
+                                        setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, conversions: num, roi: calculatedRoi } : c));
+                                      }}
+                                      className="text-xs text-blue-600 hover:underline shrink-0"
+                                    >
+                                      সংশোধন
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="p-3">
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${camp.roi > 2 ? 'bg-emerald-500/20 text-emerald-400' : camp.roi > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}`}>
+                                    {camp.roi > 0 ? `${camp.roi}x ROI` : 'N/A'}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-center">
+                                  
+<select value={camp.status} onChange={(e) => setCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, status: e.target.value as any } : c))} className="px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium outline-none focus:border-emerald-600 bg-white cursor-pointer"><option value="Active">Active</option><option value="Paused">Paused</option><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option></select>
+
+                                </td>
+                                <td className="p-3">
+                                  <button
+                                    onClick={() => {
+                                      if (confirm('ক্যাম্পেইনটি ডিলিট করতে চান?')) {
+                                        setCampaigns(prev => prev.filter(c => c.id !== camp.id));
+                                      }
+                                    }}
+                                    className="text-slate-300 hover:text-rose-600 transition-colors"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                </table>
+                      </div>
+                    </div>
+</div>
+</div>
+            );
+          })()}
+
+
+                    {/* TAB: DUE LEDGER */}
+          {activeTab === 'dues' && (
+            <div className="space-y-6 select-none">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <BookOpen size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-500 mb-0.5">মোট পাওনা বকেয়া</p>
+                    <h3 className="text-xl font-bold text-slate-800">&nbsp;৳{dues.filter(d => d.status !== 'Paid').reduce((sum, d) => sum + (d.amount - d.paidAmount), 0)}</h3>
+                  </div>
+                </div>
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <CheckSquare size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-500 mb-0.5">মোট আদায় হয়েছে</p>
+                    <h3 className="text-xl font-bold text-slate-800">&nbsp;৳{dues.reduce((sum, d) => sum + d.paidAmount, 0)}</h3>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsDueModalOpen(true)}
+                  className="bg-emerald-900 text-white rounded-xl p-5 shadow-lg shadow-[#1b4332]/20 hover:bg-emerald-900 transition-all flex flex-col items-center justify-center gap-2"
+                >
+                  <PlusCircle size={24} />
+                  <span className="font-semibold text-sm">নতুন বকেয়া যোগ করুন</span>
+                </button>
+              </div>
+
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden overflow-hidden">
+                <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+                  <h3 className="font-semibold text-slate-800">বকেয়া তালিকা</h3>
+                </div>
+                
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs md:text-sm font-medium">
+                    <thead>
+                      <tr className="bg-[#f8fafc]/50 border-b border-slate-200 text-xs font-semibold text-slate-500">
+                        <th className="p-4">গ্রাহক</th>
+                        <th className="p-4">পরিমাণ</th>
+                        <th className="p-4">জমা</th>
+                        <th className="p-4">পাওনা</th>
+                        <th className="p-4 text-center">স্ট্যাটাস</th>
+                        <th className="p-4 text-center">অ্যাকশন</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 text-slate-700">
+                      {dues.filter(d => d.status !== 'Paid').length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-slate-500">কোন বকেয়া রেকর্ড নেই।</td>
+                        </tr>
+                      ) : (
+                        dues.filter(d => d.status !== 'Paid').map(d => {
+                          const isPaid = d.status === 'Paid';
+                          return (
+                            <tr key={d.id} className="hover:bg-[#f8fafc]/50">
+                              <td className="p-4">
+                                <div className="font-semibold text-slate-800">{d.customerName}</div>
+                                <div className="text-[10px] text-slate-500">{d.phone}</div>
+                              </td>
+                              <td className="p-4 text-rose-600">&nbsp;৳{d.amount}</td>
+                              <td className="p-4 text-emerald-600">&nbsp;৳{d.paidAmount}</td>
+                              <td className="p-4 font-medium">&nbsp;৳{d.amount - d.paidAmount}</td>
+                              <td className="p-4 text-center">
+                                <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                  isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                  d.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                  'bg-rose-50 text-rose-600 border border-rose-100'
+                                }`}>
+                                  {isPaid ? 'পরিশোধিত' : d.status === 'Partial' ? 'আংশিক জমা' : 'বকেয়া'}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center flex justify-center gap-2">
+                                {!isPaid && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentDue(d); setIsDuePayModalOpen(true); }}
+                                      className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors border border-emerald-100 cursor-pointer"
+                                    >
+                                      টাকা জমা
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); addNotification('এসএমএস রিমাইন্ডার', `${d.customerName} এর নাম্বারে বকেয়া পরিশোধের রিমাইন্ডার পাঠানো হয়েছে।`); }}
+                                      className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded text-[10px] font-semibold transition-colors border border-blue-100 flex items-center gap-1 cursor-pointer"
+                                      title="সফটওয়্যার থেকে ম্যাসেজ"
+                                    >
+                                      <PhoneCall size={10} /> রিমাইন্ডার
+                                    </button>
+                                  </>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="block md:hidden divide-y divide-slate-200/60">
+                  {dues.filter(d => d.status !== 'Paid').length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 font-medium text-xs">কোন বকেয়া রেকর্ড নেই।</div>
+                  ) : (
+                    dues.filter(d => d.status !== 'Paid').map(d => {
+                      const isPaid = d.status === 'Paid';
+                      return (
+                        <div key={d.id} className="p-4 flex flex-col gap-3 hover:bg-[#f8fafc]/50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold text-[#115e5a] text-sm leading-normal">{d.customerName}</div>
+                              <div className="text-[10px] text-slate-500 font-semibold mt-0.5">{d.phone}</div>
+                            </div>
+                            <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                              isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                              d.status === 'Partial' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                              'bg-rose-50 text-rose-600 border border-rose-100'
+                            }`}>
+                              {isPaid ? 'পরিশোধিত' : d.status === 'Partial' ? 'আংশিক জমা' : 'বকেয়া'}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center bg-[#f8fafc] rounded-xl p-3 border border-slate-200">
+                            <div className="flex flex-col text-center">
+                              <span className="text-[9px] text-slate-500 font-medium uppercase mb-0.5">পরিমাণ</span>
+                              <span className="text-sm font-medium text-slate-700">&nbsp;৳{d.amount}</span>
+                            </div>
+                            <div className="flex flex-col text-center border-l border-r border-slate-200 px-3">
+                              <span className="text-[9px] text-slate-500 font-medium uppercase mb-0.5">জমা</span>
+                              <span className="text-sm font-medium text-emerald-600">&nbsp;৳{d.paidAmount}</span>
+                            </div>
+                            <div className="flex flex-col text-center">
+                              <span className="text-[9px] text-slate-500 font-medium uppercase mb-0.5">পাওনা</span>
+                              <span className="text-sm font-medium text-rose-600">&nbsp;৳{d.amount - d.paidAmount}</span>
+                            </div>
+                          </div>
+
+                          {!isPaid && (
+                            <div className="flex items-center gap-2 justify-end mt-1">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentDue(d); setIsDuePayModalOpen(true); }}
+                                className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-2 rounded-xl text-[10px] font-semibold transition-colors border border-emerald-100 flex-1 flex items-center justify-center gap-1 cursor-pointer"
+                              >
+                                টাকা জমা
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); addNotification('এসএমএস রিমাইন্ডার', `${d.customerName} এর নাম্বারে বকেয়া পরিশোধের রিমাইন্ডার পাঠানো হয়েছে।`); }}
+                                className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-xl text-[10px] font-semibold transition-colors border border-blue-100 flex-1 flex items-center justify-center gap-1 cursor-pointer"
+                              >
+                                <PhoneCall size={12} /> রিমাইন্ডার
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+                              {/* TAB: LANDING PAGE */}
+          {activeTab === 'landing-page' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800 tracking-tight">প্রোডাক্ট ল্যান্ডিং পেইজ</h2>
+                  <p className="text-sm text-slate-500 font-medium mt-1">
+                    আপনার প্রতিটি পণ্যের জন্য আলাদা সিঙ্গেল ল্যান্ডিং পেইজ পরিচালনা করুন। লিংক কপি করে মার্কেটিং করুন।
+                  </p>
+                </div>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="পণ্য খুঁজুন..." 
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full sm:w-64 pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 transition-all shadow-sm" 
+                  />
+                  <Search size={16} className="absolute left-3.5 top-2.5 text-slate-400" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filteredProductsList.map(product => (
+                  <div key={product.id} className="bg-white rounded-xl border border-slate-200 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col group hover:shadow-md hover:border-slate-300 transition-all">
+                    <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                      <img 
+                        src={product.image} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-3 right-3 flex gap-2">
+                        {product.isFlashSale && <span className="bg-rose-500 text-white text-[10px] px-2 py-1 rounded-md font-bold shadow-sm">Flash Sale</span>}
+                        <span className="bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] px-2 py-1 rounded-md font-bold shadow-sm">{product.category}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="font-bold text-slate-800 text-base leading-normal mb-1">{product.name}</h3>
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="font-bold text-emerald-600">&nbsp;৳{product.discountedPrice || product.originalPrice}</span>
+                        {product.discountedPrice && <span className="text-xs text-rose-500 line-through">&nbsp;৳{product.originalPrice}</span>}
+                        <span className="text-xs text-slate-500 font-medium bn-safe">/ {product.weight}</span>
+                      </div>
+
+                      <div className="mt-auto space-y-2.5">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(window.location.origin + '/#product=' + product.id);
+                              alert('ল্যান্ডিং পেইজ লিংক কপি হয়েছে!');
+                            }}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#f8fafc] hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-sm font-medium transition-colors"
+                          >
+                            <Copy size={16} className="text-slate-500" /> লিংক কপি
+                          </button>
+                          <a 
+                            href={'/#product=' + product.id} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex items-center justify-center p-2 bg-[#f8fafc] hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition-colors"
+                            title="লাইভ দেখুন"
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                        </div>
+                        <button 
+                          onClick={() => openEditProductModal(product)}
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-medium transition-all shadow-sm active:scale-[0.98]"
+                        >
+                          <Edit3 size={16} /> পেইজ এডিট করুন
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {filteredProductsList.length === 0 && (
+                  <div className="col-span-full py-16 text-center bg-white border border-slate-200/60 rounded-xl">
+                    <MonitorSmartphone size={40} className="mx-auto mb-3 text-slate-300" />
+                    <p className="text-slate-500 font-medium">কোন পণ্য পাওয়া যায়নি</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: SYSTEM SETTINGS */}
+          {activeTab === 'staff' && (
+            <div className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-[1600px] mx-auto">
+              <StaffManagement />
+            </div>
+          )}
+
+          {activeTab === 'categories' && (
+            <div className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-[1600px] mx-auto">
+              <CategoryManagement />
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="max-w-xl bg-white border border-slate-200 shadow-sm rounded-xl p-6 space-y-6">
+              
+              <div>
+                <h3 className="font-semibold text-base text-slate-800">স্টোর ইনফরমেশন সেটিংস</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">গ্রাহক স্টোর ইন্টারফেসে প্রদর্শিত যোগাযোগের ডিটেইলস আপডেট করুন</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">হিরো ব্যানার আপলোড (Max: 2MB)</label>
+                  {heroBannerUrl && (
+                    <img src={heroBannerUrl} alt="Hero Banner Preview" className="w-full h-32 object-cover rounded-lg mb-3 border border-slate-200" />
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 500 * 1024) {
+                          alert('ফাইলের সাইজ ৫০০ কেবির বেশি হতে পারবে না');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          setHeroBannerUrl(base64);
+                          safeSetItem('urbor_hero_banner', base64);
+                          if (updateSettingsInDB) updateSettingsInDB({ heroBannerUrl: base64 });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">ব্যানারের সাইজ চিকন ও ওয়াইড (যেমন 1200x400) হলে ভালো হয়।</p>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">লোগো আপলোড (Max: 1MB)</label>
+                  {logoUrl && (
+                    <img src={logoUrl} alt="Logo Preview" className="w-24 h-24 object-contain bg-white rounded-lg mb-3 border border-slate-200 p-2" />
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 500 * 1024) {
+                          alert('ফাইলের সাইজ ৫০০ কেবির বেশি হতে পারবে না');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          setLogoUrl(base64);
+                          if (ctxSetLogo) ctxSetLogo(base64);
+                          safeSetItem('urbor_logo_url', base64);
+                          if (updateSettingsInDB) updateSettingsInDB({ logoUrl: base64 });
+                          updatePWAIcon();
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">লোগোর সাইজ স্কয়ার এবং পিএনজি (PNG) হলে ভালো হয়।</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">স্টোরের নাম</label>
+                  <input type="text" defaultValue="উর্বর ফুড" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">স্টোর হটলাইন নাম্বার</label>
+                  <input type="text" defaultValue="+880 1795-973932" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">হেল্পডেস্ক ইমেইল</label>
+                  <input type="email" defaultValue="hello@urborfood.com" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">স্টোর আউটলেট ঠিকানা</label>
+                  <input type="text" defaultValue="বাড়ি # ১৪/২৪, রোড # শাহজাহান রোড ,ব্লক # এ,মোহাম্মদপুর,ঢাকা-১২০৭, বাংলাদেশ।" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600 bn-safe" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 uppercase tracking-wider mb-2">ডেলিভারি চার্জ (টাকা)</label>
+                  <input type="number" defaultValue="৮০" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none text-sm font-medium focus:border-emerald-600 bn-safe" />
+                </div>
+
+                <div className="pt-2">
+                  <button 
+                    onClick={() => alert('সফলভাবে সেটিংস সংরক্ষিত হয়েছে!')}
+                    className="bg-emerald-600 text-white py-2.5 px-6 rounded-xl text-sm font-medium hover:bg-emerald-700 shadow-md transition-all cursor-pointer"
+                  >
+                    সেটিংস সংরক্ষণ করুন
+                  </button>
+                </div>
+              </div>
+
+              {/* Real-time Order push & chime alert setup card */}
+              <div className="border-t border-slate-200 pt-6 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-base text-slate-800 flex items-center gap-1.5">
+                    <Bell size={18} className="text-emerald-600" />
+                    অর্ডার নোটিফিকেশন ও অ্যালার্ম সেটিংস
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">নতুন অর্ডার জেনারেট হওয়ার সাথে সাথে ব্রাউজারে অ্যালার্ম শুনুন</p>
+                </div>
+
+                <div className="space-y-3 font-bold text-xs text-slate-700">
+                  {/* Alarm switch toggle */}
+                  <label className="flex items-center justify-between p-3.5 bg-[#f8fafc] hover:bg-slate-100/50 rounded-xl cursor-pointer border border-slate-200 transition-colors select-none">
+                    <div className="flex flex-col gap-0.5 max-w-[80%]">
+                      <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                        {soundEnabled ? <Volume2 size={16} className="text-emerald-600" /> : <VolumeX size={16} className="text-slate-500" />}
+                        পিয়ানো রিং টোন চিম অ্যালার্ম
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium leading-relaxed">অর্ডার সম্পন্ন হবার সাথে সাথে রিয়েল-টাইমে অ্যালার্ম সাউন্ড বাজবে</span>
+                    </div>
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        checked={soundEnabled} 
+                        onChange={() => setSoundEnabled(!soundEnabled)} 
+                        className="sr-only peer" 
+                      />
+                      <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </div>
+                  </label>
+
+                  {/* HTML5 Push System status */}
+                  <div className="p-3.5 bg-[#f8fafc] rounded-xl border border-slate-200 flex items-center justify-between gap-4 font-bold select-none">
+                    <div className="flex flex-col gap-0.5 max-w-[70%]">
+                      <span className="text-slate-800 font-semibold">উইন্ডোজ/মোবাইল ডেক্সটপ পুশ অ্যালার্ট</span>
+                      <span className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        অবস্থা: {desktopPermission === 'granted' ? 'সিস্টেম চালু আছে (Granted) ✅' : desktopPermission === 'denied' ? 'বন্ধ করা আছে (Denied) ❌' : 'অনুমতি নেওয়া হয়নি ⚠️'}
+                      </span>
+                    </div>
+
+                    {desktopPermission !== 'granted' ? (
+                      <button 
+                        onClick={requestDesktopPermission}
+                        className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-[10px] px-3 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer active:scale-95"
+                      >
+                        অনুমতি চালু করুন
+                      </button>
+                    ) : (
+                      <span className="text-emerald-600 text-[10px] bg-emerald-100 border border-emerald-500/20 px-2.5 py-1 rounded font-bold uppercase">Active</span>
+                    )}
+                  </div>
+
+                  {/* Manual testing buttons */}
+                  <div className="grid grid-cols-2 gap-3.5 pt-2 select-none">
+                    <button
+                      type="button"
+                      onClick={triggerSound}
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 px-4 rounded-xl text-[10px] font-semibold flex items-center justify-center gap-1.5 border border-slate-200/50 transition-all cursor-pointer active:scale-95"
+                    >
+                      🗣️ অ্যালার্ম সাউন্ড টেস্ট করুন
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const testNames = ['মুহাম্মদ সালমান রহমান', 'ফারজানা ইয়াসমিন', 'ইশতিয়াক আহমেদ চৌধুরী', 'তানজিম হাসান', 'রুবাইয়া কবীর'];
+                        const testPhones = ['01712445522', '01811883311', '01915998822', '01552223344', '01673887755'];
+                        const testAddrs = ['রোড ৪, হাউজিং স্টেট, ধানমন্ডি, ঢাকা', 'সেক্টর ৪, উত্তরা মডেল টাউন, ঢাকা', 'মুরাদপুর ফরেস্ট গেট, চট্টগ্রাম', 'সেনপাড়া শ্যাওড়াপাড়া, মিরপুর ২, ঢাকা', 'হাতিমবাগ, সিলেট'];
+                        
+                        const rN = testNames[Math.floor(Math.random() * testNames.length)];
+                        const rP = testPhones[Math.floor(Math.random() * testPhones.length)];
+                        const rA = testAddrs[Math.floor(Math.random() * testAddrs.length)];
+                        
+                        // Select a random product
+                        const list = products.length > 0 ? products : [
+                          { id: 'p1', name: 'প্রিমিয়াম গরুর মাংস (হাড় ছাড়া)', originalPrice: 799, category: 'গরুর মাংস', weight: '১ কেজি', image: '' }
+                        ];
+                        const randomP = list[Math.floor(Math.random() * list.length)];
+                        
+                        const items = [{
+                          id: randomP.id,
+                          name: randomP.name,
+                          quantity: 1,
+                          price: randomP.discountedPrice || randomP.originalPrice
+                        }];
+
+                        const totalBill = items.reduce((sum, item) => sum + item.price, 0);
+
+                        const randomMockOrderObj = {
+                          id: `ord-${Math.floor(100 + Math.random() * 900)}`,
+                          customerName: rN,
+                          phone: rP,
+                          address: rA,
+                          items: items,
+                          total: totalBill,
+                          date: new Date().toISOString(),
+                          status: 'Pending' as const,
+                            salesman: manualOrderSalesman
+                        };
+
+                        addSimulatedOrder(randomMockOrderObj);
+                      }}
+                      className="bg-emerald-50 hover:bg-emerald-500/20 text-emerald-400 py-2.5 px-4 rounded-xl text-[10px] font-bold border border-emerald-500/20 flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer active:scale-95"
+                    >
+                      নতুন অর্ডার সিমুলেট
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+
+          
