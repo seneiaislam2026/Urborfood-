@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { useReactToPrint } from 'react-to-print';
 import { useUI } from '../context/UIContext';
+import { compressImage } from '../utils/imageUtils';
 import { updatePWAIcon } from '../pwa-icon';
 import { 
   Send, Package, Leaf, 
@@ -60,7 +61,7 @@ import {
   MapPin,
   ChevronDown,
   Tag
-, ChevronRight, MonitorSmartphone, CalendarDays, Copy, ExternalLink, Edit3, ShoppingCart, FileText, Store } from 'lucide-react';
+, ChevronRight, MonitorSmartphone, CalendarDays, Copy, ExternalLink, Edit3, ShoppingCart, FileText, Store, ShieldAlert } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Product } from '../types';
 import ImageLoader from '../components/ui/ImageLoader';
@@ -68,31 +69,39 @@ import StaffManagement from '../components/admin/StaffManagement';
 import CategoryManagement from '../components/admin/CategoryManagement';
 import { POSInvoicePrint } from '../components/admin/POSInvoicePrint';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
+import { db } from '../firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   // Using inline styles in the map for better control
 
-  const navItems = () => [
-    { id: 'dashboard', label: t.dashboard, icon: BarChart3 },
-    { id: 'products', label: t.productManagement, icon: Package },
-    { id: 'categories', label: 'ক্যাটাগরি', icon: Tag },
-    { id: 'product-prices', label: 'পণ্য মূল্য তালিকা', icon: DollarSign },
-    { id: 'product-reviews', label: 'প্রোডাক্ট রিভিও', icon: MessageSquare },
-    { id: 'inventory', label: t.inventoryControl, icon: Package },
-    { id: 'create-order', label: 'সেলস / অর্ডার এন্ট্রি', icon: PlusCircle },
-    { id: 'incomplete-orders', label: 'ইনকম্পিলিট অর্ডার', icon: ShoppingBag },
-    { id: 'orders', label: t.orders, icon: ShoppingBag, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
-    { id: 'courier', label: t.courierDashboard, icon: Truck },
-    { id: 'customers', label: t.customerList, icon: Users },
-    { id: 'finances', label: t.finances, icon: Wallet },
-    { id: 'dues', label: t.dues, icon: BookOpen },
-    { id: 'marketing', label: t.marketing, icon: Megaphone },
-    { id: 'landing-page', label: t.landingPage, icon: MonitorSmartphone },
-    { id: 'staff', label: t.staffManagement, icon: UserPlus },
-    { id: 'settings', label: t.settings, icon: Settings },
-  ];
+  const navItems = () => {
+    const items = [
+      { id: 'dashboard', label: t.dashboard, icon: BarChart3 },
+      { id: 'orders', label: t.orders, icon: ShoppingBag, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
+      { id: 'create-order', label: 'সেলস / অর্ডার এন্ট্রি', icon: PlusCircle },
+      { id: 'courier', label: t.courierDashboard, icon: Truck },
+      { id: 'incomplete-orders', label: 'ইনকম্পিলিট অর্ডার', icon: ShoppingBag },
+      { id: 'products', label: t.productManagement, icon: Package },
+      { id: 'categories', label: 'ক্যাটাগরি', icon: Tag },
+      { id: 'product-prices', label: 'পণ্য মূল্য তালিকা', icon: DollarSign },
+      { id: 'product-reviews', label: 'প্রোডাক্ট রিভিও', icon: MessageSquare },
+      { id: 'inventory', label: t.inventoryControl, icon: Package },
+      { id: 'customers', label: t.customerList, icon: Users },
+      { id: 'finances', label: t.finances, icon: Wallet },
+      { id: 'dues', label: t.dues, icon: BookOpen },
+      { id: 'marketing', label: t.marketing, icon: Megaphone },
+      { id: 'landing-page', label: t.landingPage, icon: MonitorSmartphone },
+      { id: 'staff', label: t.staffManagement, icon: UserPlus },
+      { id: 'settings', label: t.settings, icon: Settings },
+    ];
+    if (isStaff) {
+      return items.filter(i => ['dashboard', 'orders', 'create-order', 'courier', 'incomplete-orders', 'products', 'customers'].includes(i.id));
+    }
+    return items;
+  };
 
   const { heroBannerUrl, setHeroBannerUrl, logoUrl: ctxLogo, setLogoUrl: ctxSetLogo, updateSettingsInDB } = useUI();
   const [logoUrl, setLogoUrl] = useState(() => {
@@ -104,9 +113,27 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window !== 'undefined') {
-      return safeGetItem('urbor_admin_auth') === 'true';
+      return safeGetItem('urbor_admin_auth') === 'true' || safeGetItem('urbor_staff_auth') === 'true';
     }
     return false;
+  });
+  const [isStaff, setIsStaff] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return safeGetItem('urbor_staff_auth') === 'true';
+    }
+    return false;
+  });
+  const [staffId, setStaffId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return safeGetItem('urbor_staff_id') || '';
+    }
+    return '';
+  });
+  const [staffName, setStaffName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return safeGetItem('urbor_staff_name') || '';
+    }
+    return '';
   });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -118,6 +145,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setIsAuthenticated(false);
     if (typeof window !== 'undefined') {
       safeRemoveItem('urbor_admin_auth');
+      safeRemoveItem('urbor_staff_auth');
+      safeRemoveItem('urbor_staff_id');
+      safeRemoveItem('urbor_staff_name');
     }
     onLogout();
   };
@@ -128,16 +158,26 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [staffList, setStaffList] = useState<any[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedStaff = safeGetItem('urbor_staff_list');
-      if (savedStaff) {
-        try {
-          setStaffList(JSON.parse(savedStaff));
-        } catch (e) {
-          console.error('Failed to parse staff list', e);
+    if (typeof window === 'undefined') return;
+    const unsub = onSnapshot(doc(db, 'appData', 'staff'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.staffList) {
+          setStaffList(data.staffList);
+          safeSetItem('urbor_staff_list', JSON.stringify(data.staffList));
+        }
+      } else {
+        const savedStaff = safeGetItem('urbor_staff_list');
+        if (savedStaff) {
+          try {
+            const parsed = JSON.parse(savedStaff);
+            setStaffList(parsed);
+            setDoc(doc(db, 'appData', 'staff'), { staffList: parsed }).catch(console.error);
+          } catch(e) {}
         }
       }
-    }
+    });
+    return () => unsub();
   }, []);
 
   // Language translation state
@@ -217,7 +257,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     triggerSound,
     desktopPermission,
     requestDesktopPermission,
-    addSimulatedOrder
+    addSimulatedOrder,
+    updateOrder
   } = useCart();
 
   // Print Invoice states
@@ -260,7 +301,12 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [manualOrderAddress, setManualOrderAddress] = useState('');
   const [manualOrderIsDue, setManualOrderIsDue] = useState(false);
   const [manualOrderSource, setManualOrderSource] = useState<'shop' | 'website' | 'facebook' | 'whatsapp'>('shop');
-  const [manualOrderSalesman, setManualOrderSalesman] = useState('');
+  const [manualOrderSalesman, setManualOrderSalesman] = useState(() => {
+    if (typeof window !== 'undefined' && safeGetItem('urbor_staff_auth') === 'true') {
+      return safeGetItem('urbor_staff_name') || '';
+    }
+    return '';
+  });
   const [isSalesmanDropdownOpen, setIsSalesmanDropdownOpen] = useState(false);
   const [savedCustomers, setSavedCustomers] = useState<{ id: string, name: string, phone: string, address: string }[]>([]);
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
@@ -339,11 +385,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     return defaultVal;
   });
 
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      safeSetItem('mega_dues', JSON.stringify(dues));
-    }
-  }, [dues]);
+
+
 
   const [isDueModalOpen, setIsDueModalOpen] = useState(false);
   const [isDuePayModalOpen, setIsDuePayModalOpen] = useState(false);
@@ -460,17 +503,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   });
 
   // Save campaigns & coupons to localStorage
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      safeSetItem('mega_campaigns', JSON.stringify(campaigns));
-    }
-  }, [campaigns]);
 
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      safeSetItem('mega_coupons', JSON.stringify(coupons));
-    }
-  }, [coupons]);
+
+
 
   // Request browser desktop push notification permission automatically on mount
   React.useEffect(() => {
@@ -496,6 +531,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Modals management states
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingCourierNoteOrderId, setEditingCourierNoteOrderId] = useState<string | null>(null);
+  const [courierNoteText, setCourierNoteText] = useState('');
+  const [editingTrackingOrderId, setEditingTrackingOrderId] = useState<string | null>(null);
+  const [trackingIdText, setTrackingIdText] = useState('');
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [selectedCustomerHistory, setSelectedCustomerHistory] = useState<{ phone: string, name: string } | null>(null);
   
@@ -537,27 +576,49 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     
     if (isOldCreds) {
       setIsAuthenticated(true);
+      setIsStaff(false);
       if (typeof window !== 'undefined') {
         safeSetItem('urbor_admin_auth', 'true');
+        safeRemoveItem('urbor_staff_auth');
       }
       setError('');
-    } else {
-      setError('ভুল ইউজারনেম বা পাসওয়ার্ড! সঠিক এডমিন লগইন - ইউজারনেম: admin, পাসওয়ার্ড: admin');
+      return;
     }
+
+    // Check staff
+    const staffListRaw = safeGetItem('urbor_staff_list');
+    if (staffListRaw) {
+      try {
+        const staffs = JSON.parse(staffListRaw);
+        const staff = staffs.find((s: any) => s.username === username.trim() && s.password === password);
+        if (staff) {
+          setIsAuthenticated(true);
+          setIsStaff(true);
+          setStaffId(staff.id);
+          setStaffName(staff.name);
+          if (typeof window !== 'undefined') {
+            safeSetItem('urbor_staff_auth', 'true');
+            safeSetItem('urbor_staff_id', staff.id);
+            safeSetItem('urbor_staff_name', staff.name);
+            safeRemoveItem('urbor_admin_auth');
+          }
+          setError('');
+          return;
+        }
+      } catch(e) {}
+    }
+
+    setError('ভুল ইউজারনেম বা পাসওয়ার্ড!');
   };
 
   // Courier booking mockup states
   const [bookingOrder, setBookingOrder] = useState<any | null>(null);
-  const [courierService, setCourierService] = useState<'pathao' | 'redx' | 'steadfast'>('pathao');
+  const [courierService, setCourierService] = useState<'steadfast'>('steadfast');
   const [weightKg, setWeightKg] = useState('1.0');
   const [isBookingSuccess, setIsBookingSuccess] = useState(false);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [bookingId, setBookingId] = useState('');
   
-  // Fraud Checker states
-  const [fraudCheckPhone, setFraudCheckPhone] = useState('');
-  const [fraudCheckResult, setFraudCheckResult] = useState<any | null>(null);
-  const [isFraudCheckLoading, setIsFraudCheckLoading] = useState(false);
   const [paymentsData, setPaymentsData] = useState<any | null>(null);
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
   const [trackingInvoiceId, setTrackingInvoiceId] = useState('');
@@ -1005,172 +1066,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   // Authentication Page view
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex font-sans">
-        
-        {/* Left Side - Image & Branding (Hidden on mobile) */}
-        <div className="hidden lg:flex w-1/2 relative bg-emerald-900 overflow-hidden items-center justify-center flex-col p-12 text-center">
-          <div className="absolute inset-0">
-            <img 
-              src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80" 
-              alt="Organic Food" 
-              className="w-full h-full object-cover opacity-30 mix-blend-overlay"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-900/80 to-transparent" />
-          </div>
-          
-          <div className="relative z-10 flex flex-col items-center">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Urbor Food" className="h-20 mb-8 brightness-0 invert drop-shadow-md" />
-            ) : (
-              <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center mb-8 shadow-xl">
-                <Leaf className="text-emerald-400" size={40} />
-              </div>
-            )}
-            <h1 className="text-4xl font-black text-white mb-4 tracking-tight leading-normal">
-              অ্যাডমিন ড্যাশবোর্ড
-            </h1>
-            <p className="text-emerald-100/80 text-lg font-medium max-w-md mx-auto leading-relaxed">
-              আপনার স্টোরের বিক্রি, মজুত এবং কাস্টমার ম্যানেজমেন্ট করুন একটি সুন্দর ও সহজ প্ল্যাটফর্মে।
-            </p>
-            
-            <div className="mt-12 flex items-center gap-6 text-emerald-200/60 text-sm font-semibold">
-              <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-400" /> সুরক্ষিত</div>
-              <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-400" /> দ্রুত</div>
-              <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-400" /> নির্ভরযোগ্য</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - Login Form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-white">
-          {/* Decorative background elements for mobile */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2 lg:hidden" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-50 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2 lg:hidden" />
-
-          <div className="w-full max-w-md relative z-10">
-            {/* Mobile Logo */}
-            <div className="flex lg:hidden flex-col items-center mb-8">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Urbor Food" className="h-16 mb-4 drop-shadow-sm" />
-              ) : (
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                  <Leaf size={32} />
-                </div>
-              )}
-              <h2 className="text-2xl font-black text-slate-800">স্বাগতম!</h2>
-              <p className="text-slate-500 font-medium text-sm mt-1">অ্যাডমিন প্যানেলে লগইন করুন</p>
-            </div>
-
-            {/* Desktop Header */}
-            <div className="hidden lg:block mb-10">
-              <h2 className="text-3xl font-black text-slate-800 tracking-tight">স্বাগতম ফিরেছেন!</h2>
-              <p className="text-slate-500 font-medium mt-2">অনুগ্রহ করে আপনার অ্যাকাউন্টে প্রবেশ করুন</p>
-            </div>
-
-            <form className="space-y-5" onSubmit={handleLogin}>
-              {error && (
-                <div className="bg-rose-50 text-rose-600 p-4 rounded-xl text-sm font-semibold flex items-center gap-3 border border-rose-100 animate-shake">
-                  <AlertTriangle size={18} className="shrink-0" />
-                  {error}
-                </div>
-              )}
-              
-              <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-slate-700">ইউজারনেম</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-600 transition-colors">
-                    <User size={18} strokeWidth={2.5} />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="আপনার ইউজারনেম লিখুন"
-                    className="w-full py-3.5 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold text-slate-700">পাসওয়ার্ড</label>
-                  <button type="button" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline focus:outline-none transition-colors">
-                    ভুলে গেছেন?
-                  </button>
-                </div>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-600 transition-colors">
-                    <Lock size={18} strokeWidth={2.5} />
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="আপনার পাসওয়ার্ড লিখুন"
-                    className="w-full py-3.5 pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-emerald-600 focus:outline-none transition-colors"
-                  >
-                    {showPassword ? <Eye size={18} strokeWidth={2.5} /> : <EyeOff size={18} strokeWidth={2.5} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-bold text-[15px] shadow-[0_8px_20px_rgb(5,150,105,0.25)] hover:shadow-[0_12px_25px_rgb(5,150,105,0.35)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                >
-                  <LogIn size={18} strokeWidth={2.5} />
-                  লগিন করুন
-                </button>
-              </div>
-
-              {/* Direct Bypass Button for easy entry */}
-              <div className="mt-4 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAuthenticated(true);
-                    if (typeof window !== 'undefined') {
-                      safeSetItem('urbor_admin_auth', 'true');
-                    }
-                    setError('');
-                  }}
-                  className="w-full bg-white hover:bg-slate-50 text-slate-600 border-2 border-slate-200 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                >
-                  <ShieldCheck size={16} strokeWidth={2.5} className="text-emerald-500" />
-                  সরাসরি প্রবেশ করুন (Bypass)
-                </button>
-              </div>
-            </form>
-
-            {/* Back to store link */}
-            <div className="mt-8 text-center">
-              <button 
-                onClick={handleLogoutClick}
-                className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors group"
-              >
-                <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-emerald-50 flex items-center justify-center transition-colors">
-                  <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                </div>
-                ওয়েবসাইটে ফিরে যান
-              </button>
-            </div>
-            
-          </div>
-        </div>
-      </div>
-    );
-
+    return null; // Layout handles redirect to login
   }
-
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-slate-800 print:overflow-visible print:h-auto print:block">
       <div style={{ display: "none" }}>
@@ -1289,7 +1186,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           
           <div className="mt-8 text-center pb-4 opacity-60">
             <p className="text-[11px] font-bold text-slate-500 flex items-center justify-center gap-1">
-               <span className="text-emerald-600">Urbor Food</span> Admin Panel
+               <span className="text-emerald-600">Urbor Food</span> {isStaff ? 'স্টাফ পোর্টাল' : (lang === 'bn' ? 'এডমিন প্যানেল' : 'Admin Panel')}
             </p>
             <p className="text-[10px] text-slate-400 mt-0.5">&copy; 2025 All rights reserved</p>
           </div>
@@ -1414,7 +1311,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
               <div className="mt-8 text-center pb-4 opacity-60">
                 <p className="text-[11px] font-bold text-slate-500 flex items-center justify-center gap-1">
-                  <span className="text-emerald-600">Urbor Food</span> Admin Panel
+                  <span className="text-emerald-600">Urbor Food</span> {isStaff ? 'স্টাফ পোর্টাল' : (lang === 'bn' ? 'এডমিন প্যানেল' : 'Admin Panel')}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">&copy; 2025 All rights reserved</p>
               </div>
@@ -1698,6 +1595,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         const salesmanData: Record<string, number> = {};
                         orders.filter(o => o.status !== 'Cancelled').forEach(o => {
                             const name = o.salesman || 'ওয়েবসাইট';
+                            if (isStaff && name !== staffName) return;
                             salesmanData[name] = (salesmanData[name] || 0) + o.total;
                         });
                         return Object.entries(salesmanData)
@@ -1854,7 +1752,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {/* Left Block: Recent Orders Table / Cards */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm lg:col-span-8 flex flex-col min-w-0 overflow-hidden">
                   <div className="p-5 border-b border-slate-200 flex items-center justify-between gap-3 flex-wrap shrink-0 bg-gradient-to-r from-white to-slate-50/50 select-none">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2.5">
                       <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100/50">
                         <ShoppingBag size={18} />
                       </div>
@@ -2062,67 +1960,66 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
 
                   {/* Operational Status overview indicator */}
-                  <div className="bg-gradient-to-br from-[#0c5940] to-[#128f65] text-white rounded-[20px] p-6 md:p-8 shadow-sm relative overflow-hidden flex-1 flex flex-col justify-between">
-                    {/* Subtle background glow */}
-                    <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
-                    <div>
-                      <div className="flex justify-between items-center mb-6 relative z-10">
-                        <div className="flex items-center gap-2.5 bg-[#ffffff10] border border-white/10 px-4 py-2 rounded-full text-[13px] font-bold text-white tracking-wide">
-                          <span className="relative flex h-3.5 w-3.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34d399] opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#34d399]"></span>
+                  <div className="bg-white rounded-[20px] p-6 md:p-8 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05),0_10px_20px_-2px_rgba(0,0,0,0.02)] border border-slate-200/60 flex-1 flex flex-col justify-between relative overflow-hidden group">
+                    {/* Subtle decorative background pattern */}
+                    <div className="absolute top-0 right-0 -mr-8 -mt-8 opacity-[0.03] text-emerald-600 pointer-events-none transition-transform duration-700 group-hover:scale-110">
+                      <ShieldCheck size={240} strokeWidth={1} />
+                    </div>
+                    
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center mb-8">
+                        <div className="flex items-center gap-2.5 bg-emerald-50/80 border border-emerald-100/80 px-4 py-2 rounded-full text-[13px] font-bold text-emerald-700 tracking-wide shadow-sm">
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                           </span>
                           অপারেশন স্ট্যাটাস
                         </div>
-                        <div className="p-3 bg-[#ffffff10] rounded-2xl border border-white/10 text-emerald-100">
-                          <ShieldCheck size={22} />
+                        <div className="p-3.5 bg-slate-50/80 rounded-[14px] border border-slate-100 text-slate-400 shadow-sm transition-colors group-hover:text-emerald-500 group-hover:bg-emerald-50/50 group-hover:border-emerald-100/50">
+                          <ShieldCheck size={22} strokeWidth={2} />
                         </div>
                       </div>
                       
-                      <h4 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-1.5 font-sans relative z-10 mb-3">
+                      <h4 className="text-2xl md:text-[28px] font-black text-slate-800 tracking-tight flex items-center gap-1.5 font-sans mb-3">
                         উর্বর ফুড অনলাইন
                       </h4>
-                      <p className="text-[13px] text-emerald-50/90 font-medium leading-relaxed relative z-10 max-w-[95%]">
+                      <p className="text-[13.5px] text-slate-500 font-medium leading-relaxed max-w-[95%]">
                         সমস্ত সিস্টেম সচল এবং রিয়েল-টাইমে অর্ডার গ্রহণ করছে। কাস্টমার অ্যাপে ক্যাশ অন ডেলিভারি মোড সচল করা আছে।
                       </p>
                     </div>
 
-                    <div className="border-t border-white/10 mt-8 pt-6 relative z-10">
+                    <div className="border-t border-slate-100 mt-8 pt-7 relative z-10">
                       <div className="grid grid-cols-3 gap-3 md:gap-4 text-center">
                         {/* Pending Card */}
-                        <div className="bg-[#ffffff15] border border-white/10 rounded-2xl p-4 flex flex-col justify-center items-center relative transition-all hover:bg-[#ffffff20]">
-                          <div className="absolute top-2.5 right-2.5 text-amber-300">
-                            <Clock size={15} strokeWidth={2.5} />
+                        <div className="bg-[#fff9ed] border border-[#ffedd5] rounded-[16px] p-4 flex flex-col justify-center items-center relative transition-all duration-300 hover:shadow-sm hover:-translate-y-0.5">
+                          <div className="absolute top-3 right-3 text-amber-500">
+                            <Clock size={16} strokeWidth={2.5} />
                           </div>
-                          <p className="text-[12px] md:text-[13px] text-emerald-50/90 font-bold mb-1.5">পেন্ডিং</p>
-                          <p className="text-2xl md:text-3xl font-black text-amber-300 drop-shadow-sm">{pendingOrdersCount}</p>
+                          <p className="text-[12px] md:text-[13px] text-amber-700 font-bold mb-1.5">পেন্ডিং</p>
+                          <p className="text-2xl md:text-3xl font-black text-amber-600">{pendingOrdersCount}</p>
                         </div>
 
                         {/* Delivered Card */}
-                        <div className="bg-[#ffffff15] border border-white/10 rounded-2xl p-4 flex flex-col justify-center items-center relative transition-all hover:bg-[#ffffff20]">
-                          <div className="absolute top-2.5 right-2.5 text-emerald-300">
-                            <CheckCircle size={15} strokeWidth={2.5} />
+                        <div className="bg-[#ecfdf5] border border-[#d1fae5] rounded-[16px] p-4 flex flex-col justify-center items-center relative transition-all duration-300 hover:shadow-sm hover:-translate-y-0.5">
+                          <div className="absolute top-3 right-3 text-emerald-500">
+                            <CheckCircle size={16} strokeWidth={2.5} />
                           </div>
-                          <p className="text-[12px] md:text-[13px] text-emerald-50/90 font-bold mb-1.5">ডেলিভারড</p>
-                          <p className="text-2xl md:text-3xl font-black text-emerald-300 drop-shadow-sm">{completedOrdersCount}</p>
+                          <p className="text-[12px] md:text-[13px] text-emerald-700 font-bold mb-1.5">ডেলিভারড</p>
+                          <p className="text-2xl md:text-3xl font-black text-emerald-600">{completedOrdersCount}</p>
                         </div>
 
                         {/* Cancelled Card */}
-                        <div className="bg-[#ffffff15] border border-white/10 rounded-2xl p-4 flex flex-col justify-center items-center relative transition-all hover:bg-[#ffffff20]">
-                          <div className="absolute top-2.5 right-2.5 text-rose-300">
-                            <AlertTriangle size={15} strokeWidth={2.5} />
+                        <div className="bg-[#fff1f2] border border-[#ffe4e6] rounded-[16px] p-4 flex flex-col justify-center items-center relative transition-all duration-300 hover:shadow-sm hover:-translate-y-0.5">
+                          <div className="absolute top-3 right-3 text-rose-500">
+                            <AlertTriangle size={16} strokeWidth={2.5} />
                           </div>
-                          <p className="text-[12px] md:text-[13px] text-emerald-50/90 font-bold mb-1.5">বাতিল</p>
-                          <p className="text-2xl md:text-3xl font-black text-rose-300 drop-shadow-sm">{cancelledOrdersCount}</p>
+                          <p className="text-[12px] md:text-[13px] text-rose-700 font-bold mb-1.5">বাতিল</p>
+                          <p className="text-2xl md:text-3xl font-black text-rose-600">{cancelledOrdersCount}</p>
                         </div>
                       </div>
                     </div>
                   </div>
-
                 </div>
-
               </div>
             </div>
           )}
@@ -2214,13 +2111,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               >
                                 <Edit size={13} />
                               </button>
-                              <button 
+                              {!isStaff && (<button 
                                 onClick={() => { if(confirm('পণ্যটি চিরতরে মুছে ফেলতে চান?')) deleteProduct(product.id); }}
                                 className="text-rose-500 hover:text-white hover:bg-rose-600 border border-rose-100 p-1.5 rounded-lg transition-all cursor-pointer"
                                 title="মুছে ফেলুন"
                               >
                                 <Trash2 size={13} />
-                              </button>
+                              </button>)}
                             </div>
                           </td>
                         </tr>
@@ -2647,8 +2544,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 <div className="font-bold text-slate-900 text-xs truncate" title={order.customerName}>
                                   {order.customerName || 'গ্রাহক'}
                                 </div>
-                                <div className="text-[11px] text-slate-500 font-mono tracking-wide mt-0.5 truncate">
-                                  {order.phone}
+                                <div className="text-[11px] text-slate-500 font-mono tracking-wide mt-0.5 flex flex-wrap items-center gap-1.5">
+                                  <a href={`tel:${order.phone}`} className="hover:text-emerald-600 transition-colors flex items-center gap-1 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">
+                                    <Phone size={9} className="text-emerald-500" />
+                                    {order.phone}
+                                  </a>
                                 </div>
                                 {order.salesman && (
                                   <div className="text-[10px] text-emerald-600 bg-emerald-50 w-max px-1.5 rounded mt-0.5 font-bold truncate">
@@ -2719,13 +2619,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                   </button>
                                 )}
 
-                                <button 
+                                {!isStaff && (<button 
                                   onClick={() => { if(confirm('অর্ডার রেকর্ডটি মুছে ফেলতে চান?')) deleteOrder(order.id); }}
                                   className="p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer border border-rose-100"
                                   title="অর্ডার ডিলিট করুন"
                                 >
                                   <Trash2 size={14} />
-                                </button>
+                                </button>)}
                               </div>
                             </td>
                           </tr>
@@ -2744,27 +2644,34 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   filteredOrdersList.map((order) => (
                     <div key={order.id} className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 p-5 flex flex-col gap-4 mx-4">
                       {/* Card Header: Order ID & Status with compact typography */}
-                      <div className="flex items-center justify-between pb-3 border-b border-slate-100/80">
-                        <span className="text-[11px] text-slate-400 font-bold">#{order.id}
-                        <span className={`inline-flex px-2.5 py-1 rounded-md text-[10px] font-black tracking-wide ${
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-2 pb-3 border-b border-slate-100/80">
+                        <span className="text-[11px] text-slate-400 font-bold">#{order.id}</span>
+                        <span className={`inline-flex items-center text-center px-2.5 py-1.5 rounded-md text-[10px] font-black tracking-wide ${
                           order.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' :
                               order.status === 'Shipped' ? 'bg-blue-50 text-blue-600 border border-blue-100/50' :
                               order.status === 'Confirmed' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100/50' :
                           order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100/50' :
                           'bg-amber-50 text-amber-600 border border-amber-100/50'
                         }`}>
-                          {order.status === 'Completed' ? 'ডেলিভারি সম্পন্ন' : order.status === 'Cancelled' ? 'বাতিল' : order.status === 'Shipped' ? 'ডেলিভারি পার্টনারের কাছে হস্তান্তরিত' : order.status === 'Confirmed' ? 'পণ্য প্রস্তুত করা হচ্ছে' : 'পেন্ডিং'}</span>
+                          {order.status === 'Completed' ? 'ডেলিভারি সম্পন্ন' : order.status === 'Cancelled' ? 'বাতিল' : order.status === 'Shipped' ? 'ডেলিভারি পার্টনারের কাছে হস্তান্তরিত' : order.status === 'Confirmed' ? 'পণ্য প্রস্তুত করা হচ্ছে' : 'পেন্ডিং'}
                         </span>
                       </div>
 
                       {/* Customer contact details */}
                       <div>
                         <div className="font-extrabold text-slate-800 text-[15px] leading-normal">{order.customerName}</div>
-                        <div className="text-[12px] text-slate-500 font-bold mt-1 flex items-center justify-between">
-                          <span>{order.phone}</span>
-                          {order.salesman && (
-                            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-bold">এসআর: {order.salesman}</span>
-                          )}
+                        <div className="text-[12px] text-slate-500 font-bold mt-2 flex flex-wrap items-center justify-between gap-2">
+                          <a href={`tel:${order.phone}`} className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+                            <Phone size={12} className="text-emerald-500" />
+                            {order.phone}
+                          </a>
+                          <div className="flex items-center gap-2">
+                            {order.salesman && (
+                              <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-1.5 rounded-lg border border-emerald-100 font-bold flex items-center gap-1">
+                                <User size={10} /> {order.salesman}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {/* Delivery Address */}
@@ -2808,13 +2715,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold outline-none focus:border-slate-900 bg-[#f8fafc] text-slate-700 w-full cursor-pointer"><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="Confirmed">Confirmed</option><option value="Courier">Courier</option><option value="Delivered">Delivered</option><option value="Cancelled">Cancelled</option><option value="Return">Return</option></select>
 
 
-                          <button 
+                          {!isStaff && (<button 
                             onClick={() => { if(confirm('অর্ডার রেকর্ডটি মুছে ফেলতে চান?')) deleteOrder(order.id); }}
                             className="text-rose-500 hover:text-white hover:bg-rose-500 bg-rose-50 p-2 rounded-lg transition-all cursor-pointer shrink-0"
                             title="অর্ডার ডিলিট"
                           >
                             <Trash2 size={14} />
-                          </button>
+                          </button>)}
                         </div>
                       </div>
                     </div>
@@ -2912,7 +2819,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 <span className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">{customer.name}</span>
                               </div>
                             </td>
-                            <td className="p-4 tracking-wide text-slate-600">{customer.phone}</td>
+                            <td className="p-4 tracking-wide text-slate-600">
+                              <a href={`tel:${customer.phone}`} onClick={(e) => e.stopPropagation()} className="hover:text-emerald-600 flex items-center gap-1.5 transition-colors">
+                                <Phone size={12} className="text-emerald-500" /> {customer.phone}
+                              </a>
+                            </td>
                             <td className="p-4 text-slate-500 font-normal">
                                <div className="max-w-[200px] truncate" title={customer.address}>{customer.address}</div>
                             </td>
@@ -2946,7 +2857,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 </div>
                                 <div className="min-w-0">
                                   <h4 className="font-bold text-slate-900 text-[15px] truncate">{customer.name}</h4>
-                                  <div className="text-slate-500 text-xs font-medium tracking-wide mt-0.5">{customer.phone}</div>
+                                  <div className="text-slate-500 text-xs font-medium tracking-wide mt-1">
+                                    <a href={`tel:${customer.phone}`} onClick={(e) => e.stopPropagation()} className="hover:text-emerald-600 flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md transition-colors w-max">
+                                      <Phone size={10} className="text-emerald-500" /> {customer.phone}
+                                    </a>
+                                  </div>
                                 </div>
                             </div>
                             <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-1 rounded-md text-[10px] font-bold shrink-0 whitespace-nowrap shadow-sm">
@@ -4160,8 +4075,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        if (file.size > 2 * 1024 * 1024) {
-                          alert('ফাইলের সাইজ ২ এমবির বেশি হতে পারবে না');
+                        if (file.size > 500 * 1024) {
+                          alert('ফাইলের সাইজ ৫০০ কেবির বেশি হতে পারবে না');
                           return;
                         }
                         const reader = new FileReader();
@@ -4190,8 +4105,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        if (file.size > 1 * 1024 * 1024) {
-                          alert('ফাইলের সাইজ ১ এমবির বেশি হতে পারবে না');
+                        if (file.size > 500 * 1024) {
+                          alert('ফাইলের সাইজ ৫০০ কেবির বেশি হতে পারবে না');
                           return;
                         }
                         const reader = new FileReader();
@@ -4425,7 +4340,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <label className="block text-xs text-slate-700 font-bold mb-1.5">সেলসম্যান (Salesman) *</label>
                         <div className="relative">
                           
-<select value={manualOrderSalesman} onChange={(e) => setManualOrderSalesman(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors cursor-pointer"><option value="">নির্বাচন করুন</option>{staffList?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+<select value={manualOrderSalesman} onChange={(e) => setManualOrderSalesman(e.target.value)} disabled={isStaff} className={`w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900/10 text-slate-800 transition-colors ${isStaff ? 'bg-slate-50 opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}><option value="">নির্বাচন করুন</option>{staffList?.map((s: any) => <option key={s.id} value={s.name}>{s.name}</option>)}</select>
 
                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
                         </div>
@@ -4897,7 +4812,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {/* TAB: COURIER DASHBOARD (কুরিয়ার ড্যাশবোর্ড) */}
           {activeTab === 'courier' && (() => {
             // We want to fetch standard confirmed or shipped orders to book into couriers!
-            const courierOrders = orders.filter(o => o.status !== 'Cancelled');
+            const courierOrders = orders.filter(o => ['Confirmed', 'Courier', 'Shipped'].includes(o.status));
 
             return (
               <div className="space-y-6">
@@ -4911,115 +4826,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
 
-                {/* Fraud Checker Section */}
-                <div className="bg-white rounded-2xl border border-slate-200/70 hover:border-amber-300 shadow-sm hover:shadow-md hover:shadow-amber-500/5 transition-all duration-300 mb-6 overflow-hidden relative group">
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="p-5 sm:p-6 border-b border-slate-100/60 bg-gradient-to-r from-amber-50/40 via-white to-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                      <h3 className="font-bold text-[15px] text-slate-800 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shadow-sm border border-amber-200/50">
-                          <AlertTriangle size={18} strokeWidth={2.5} />
-                        </div>
-                        ফ্রড চেকার (Fraud Checker)
-                      </h3>
-                      <p className="text-[12.5px] text-slate-500 mt-2 ml-12">গ্রাহকের ফোন নম্বর দিয়ে ডেলিভারি সাকসেস রেট যাচাই করুন</p>
-                    </div>
-                  </div>
-                  <div className="p-5 sm:p-6">
-                    <div className="flex flex-col sm:flex-row gap-3 max-w-lg">
-                      <div className="relative flex-1">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                          <Search className="h-4 w-4 text-slate-400" />
-                        </div>
-                        <input
-                          type="text"
-                          value={fraudCheckPhone}
-                          onChange={async (e) => {
-                            const val = e.target.value;
-                            setFraudCheckPhone(val);
-                            if (val.length === 11) {
-                              setIsFraudCheckLoading(true);
-                              setFraudCheckResult(null);
-                              try {
-                                const res = await fetch(`https://portal.packzy.com/api/v1/fraud_check/${val}`, {
-                                  headers: {
-                                    'Api-Key': 'sjg2zq4pzai6isaaolupaf1iaily32vk',
-                                    'Secret-Key': 'd7od4knpcjhxycnnlmk3oe9r'
-                                  }
-                                });
-                                const data = await res.json();
-                                setFraudCheckResult(data);
-                              } catch (err) {
-                                console.error(err);
-                              } finally {
-                                setIsFraudCheckLoading(false);
-                              }
-                            }
-                          }}
-                          placeholder="Phone number (e.g. 01XXXXXXXXX)"
-                          className="w-full pl-10 pr-4 py-3.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-sm bg-slate-50/50"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              document.getElementById('fraud-btn')?.click();
-                            }
-                          }}
-                        />
-                      </div>
-                      <button
-                        id="fraud-btn"
-                        disabled={isFraudCheckLoading || !fraudCheckPhone}
-                        onClick={async () => {
-                          if (!fraudCheckPhone) return;
-                          setIsFraudCheckLoading(true);
-                          setFraudCheckResult(null);
-                          try {
-                            const res = await fetch(`https://portal.packzy.com/api/v1/fraud_check/${fraudCheckPhone}`, {
-                              headers: {
-                                'Api-Key': 'sjg2zq4pzai6isaaolupaf1iaily32vk',
-                                'Secret-Key': 'd7od4knpcjhxycnnlmk3oe9r'
-                              }
-                            });
-                            const data = await res.json();
-                            setFraudCheckResult(data);
-                          } catch (err) {
-                            console.error(err);
-                            alert("ফ্রড চেক করতে সমস্যা হয়েছে। API Error.");
-                          } finally {
-                            setIsFraudCheckLoading(false);
-                          }
-                        }}
-                        className="bg-slate-900 hover:bg-amber-500 text-white px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm shadow-slate-900/10 hover:shadow-amber-500/30 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 active:scale-95"
-                      >
-                        {isFraudCheckLoading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> যাচাই হচ্ছে...</> : <><Search size={16} /> চেক করুন</>}
-                      </button>
-                    </div>
-
-                    {fraudCheckResult && (
-                      <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col justify-center items-center">
-                          <span className="text-[11px] text-slate-500 font-bold mb-1">মোট পার্সেল</span>
-                          <span className="text-xl font-black text-slate-800">{fraudCheckResult.total_parcels || 0}</span>
-                        </div>
-                        <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 flex flex-col justify-center items-center">
-                          <span className="text-[11px] text-emerald-600 font-bold mb-1">সফল ডেলিভারি</span>
-                          <span className="text-xl font-black text-emerald-700">{fraudCheckResult.total_delivered || 0}</span>
-                        </div>
-                        <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 flex flex-col justify-center items-center">
-                          <span className="text-[11px] text-rose-600 font-bold mb-1">ক্যানসেল হয়েছে</span>
-                          <span className="text-xl font-black text-rose-700">{fraudCheckResult.total_cancelled || 0}</span>
-                        </div>
-                        <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex flex-col justify-center items-center">
-                          <span className="text-[11px] text-amber-600 font-bold mb-1">সাকসেস রেট</span>
-                          <span className="text-xl font-black text-amber-700">
-                            {fraudCheckResult.total_parcels ? Math.round((fraudCheckResult.total_delivered / fraudCheckResult.total_parcels) * 100) : 0}%
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Payments Section */}
                 <div className="bg-white rounded-2xl border border-slate-200/70 hover:border-emerald-300 shadow-sm hover:shadow-md hover:shadow-emerald-500/5 transition-all duration-300 mb-6 overflow-hidden relative group">
                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="p-5 sm:p-6 border-b border-slate-100/60 bg-gradient-to-r from-emerald-50/40 via-white to-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -5251,114 +5057,157 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <h3 className="font-bold text-sm text-slate-800">কুরিয়ারের জন্য বুকিং যোগ্য পার্সেল সমূহ</h3>
                   </div>
 
-                  <div className="space-y-4 pt-2 pb-4">
+                  <div className="p-4 sm:p-5 flex flex-col gap-4 bg-slate-50/50">
                     {courierOrders.map((o) => {
                       const courierName = 'Steadfast Courier';
                       const trackingId = o.status === 'Shipped' ? 'STEADFAST-BOOKED' : '';
 
                       return (
-                        <div key={o.id} className="group relative bg-white border border-slate-200 hover:border-[#0b3d18]/30 rounded-2xl p-5 shadow-sm hover:shadow-md hover:shadow-[#0b3d18]/5 transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-5 overflow-hidden">
-                          {/* Accent line on hover */}
-                          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#0b3d18] rounded-l-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          
-                          {/* Order Info */}
-                          <div className="flex-1 pl-1">
-                            <div className="flex items-center gap-3 mb-2.5">
-                              <span className="font-bold text-slate-800 text-[15px]">#{o.id}</span>
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                <Truck size={10} className="text-indigo-500" />
-                                Steadfast
-                              </span>
-                            </div>
-                            <h4 className="font-bold text-slate-800 text-[15px] mb-1.5 flex items-center gap-2">
-                              <User size={14} className="text-slate-400" />
-                              {o.customerName}
-                            </h4>
-                            <p className="text-[12.5px] text-slate-600 leading-relaxed flex items-start gap-2 mb-1.5">
-                              <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
-                              {o.address}
-                            </p>
-                            <p className="text-[12.5px] font-semibold text-slate-700 flex items-center gap-2">
-                              <Phone size={14} className="text-slate-400" />
-                              {o.phone}
-                            </p>
-                          </div>
-                          
-                          {/* Status and Action */}
-                          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3.5 border-t sm:border-t-0 border-slate-100 pt-4 sm:pt-0 shrink-0 min-w-[140px]">
-                            <div className="text-left sm:text-right">
-                              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold mb-1.5 ${
-                                o.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                                o.status === 'Shipped' ? 'bg-sky-50 text-sky-700 border border-sky-200' :
-                                'bg-amber-50 text-amber-700 border border-amber-200 shadow-sm'
-                              }`}>
-                                {o.status === 'Pending' ? (
-                                  <><Clock size={12} /> পেন্ডিং</>
-                                ) : o.status === 'Completed' ? (
-                                  <><CheckCircle size={12} /> ডেলিভার্ড</>
-                                ) : (
-                                  <><Truck size={12} /> ইন ট্রানজিট</>
-                                )}
-                              </span>
-                              {o.status !== 'Pending' && (
-                                <div className="mt-1">
-                                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md inline-block border border-indigo-100">{trackingId}</span>
+                        <div key={o.id} className="group bg-white border border-slate-200 hover:border-emerald-500/40 hover:shadow-md rounded-[16px] p-4 md:p-5 transition-all duration-300">
+                          <div className="flex flex-col md:flex-row justify-between gap-4 md:gap-6">
+                            
+                            {/* Left/Top side - Order Identity & Customer */}
+                            <div className="flex-1 space-y-4">
+                              {/* Header part */}
+                              <div className="flex flex-wrap items-center justify-between md:justify-start gap-3 border-b border-slate-100 pb-3 md:border-0 md:pb-0">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="font-bold text-slate-800 text-[15px] bg-slate-50 px-2 py-1 rounded-md whitespace-nowrap shrink-0">#{o.id}</span>
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap shrink-0">
+                                    <Truck size={10} className="text-indigo-500" /> Steadfast
+                                  </span>
+                                </div>
+                                
+                                {/* Status badge - mobile top right, desktop next to identity */}
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                                  o.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                  o.status === 'Shipped' ? 'bg-sky-50 text-sky-700 border border-sky-100' :
+                                  'bg-amber-50 text-amber-700 border border-amber-100'
+                                } whitespace-nowrap shrink-0`}>
+                                  {o.status === 'Pending' ? (
+                                    <><Clock size={12} /> পেন্ডিং</>
+                                  ) : o.status === 'Completed' ? (
+                                    <><CheckCircle size={12} /> ডেলিভার্ড</>
+                                  ) : (
+                                    <><Truck size={12} /> ইন ট্রানজিট</>
+                                  )}
+                                </span>
+                              </div>
+
+                              {/* Customer details */}
+                              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                                <button 
+                                  onClick={() => { setEditingCourierNoteOrderId(o.id); setCourierNoteText(o.courierNote || ''); }}
+                                  className="flex items-center gap-3 text-left group/user min-w-[200px]"
+                                >
+                                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover/user:bg-emerald-100 transition-colors">
+                                    <User size={16} className="text-slate-500 group-hover/user:text-emerald-600 transition-colors" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-slate-800 text-[14px] group-hover/user:text-emerald-600 transition-colors mb-0.5 leading-tight">{o.customerName}</h4>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <a href={`tel:${o.phone}`} onClick={(e) => e.stopPropagation()} className="text-[12px] font-medium text-slate-500 flex items-center gap-1 hover:text-emerald-600 transition-colors bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                                        <Phone size={10} className="text-emerald-500" /> {o.phone}
+                                      </a>
+                                    </div>
+                                  </div>
+                                </button>
+
+                                <div className="flex-1 text-[12.5px] text-slate-600 leading-relaxed flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                  <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                  <span className="line-clamp-2">{o.address}</span>
+                                </div>
+                              </div>
+                              
+                              {/* Courier Note if any */}
+                              {o.courierNote && (
+                                <div className="inline-flex items-start gap-1.5 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100/60 w-full sm:w-auto mt-2">
+                                  <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
+                                  <p className="text-[12px] text-amber-800 font-medium">{o.courierNote}</p>
                                 </div>
                               )}
                             </div>
-                            
-                            {o.status === 'Pending' ? (
-                              <button
-                                onClick={async () => {
-                                  setLoadingBookings(prev => ({...prev, [o.id]: true}));
-                                  try {
-                                    const res = await fetch('https://portal.packzy.com/api/v1/create_order', {
-                                      method: 'POST',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                        'Api-Key': 'sjg2zq4pzai6isaaolupaf1iaily32vk',
-                                        'Secret-Key': 'd7od4knpcjhxycnnlmk3oe9r'
-                                      },
-                                      body: JSON.stringify({
-                                        invoice: o.id,
-                                        recipient_name: o.customerName,
-                                        recipient_phone: o.phone,
-                                        recipient_address: o.address,
-                                        cod_amount: o.total
-                                      })
-                                    });
-                                    const data = await res.json();
-                                    if (data.status === 200) {
-                                      updateOrderStatus(o.id, 'Shipped');
-                                      addNotification('কুরিয়ারে বুক করা হয়েছে 🚚', `অর্ডার #${o.id} সফলভাবে Steadfast কুরিয়ারে বুক করা হয়েছে। ট্র্যাকিং আইডি: ${data.consignment.tracking_code}`);
-                                    } else {
-                                      alert('Error: ' + (data.message || 'Failed to create consignment'));
+
+                            {/* Right/Bottom side - Actions & Price */}
+                            <div className="md:w-[240px] shrink-0 flex flex-col justify-between gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
+                              
+                              {/* Pricing & Tracking */}
+                              <div className="flex flex-row md:flex-col justify-between items-center md:items-start gap-3 flex-wrap">
+                                <div>
+                                  <p className="text-[11px] text-slate-400 font-semibold mb-0.5 uppercase tracking-wider">মোট বিল (COD)</p>
+                                  <p className="text-[18px] font-black text-slate-800">৳{o.total}</p>
+                                </div>
+                                
+                                {/* Tracking ID logic */}
+                                <div className="text-right md:text-left shrink-0">
+                                  {o.trackingId ? (
+                                    <button onClick={() => { setEditingTrackingOrderId(o.id); setTrackingIdText(o.trackingId || ''); }} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors w-full">
+                                      ট্র্যাকিং: {o.trackingId}
+                                    </button>
+                                  ) : trackingId ? (
+                                    <span className="inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] md:text-[11.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 w-full whitespace-nowrap">
+                                      <Check size={12} className="text-indigo-500" /> {trackingId}
+                                    </span>
+                                  ) : (
+                                    <button onClick={() => { setEditingTrackingOrderId(o.id); setTrackingIdText(''); }} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-medium bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 hover:text-slate-800 transition-colors w-full">
+                                      + ট্র্যাকিং আইডি
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Book Button */}
+                              {o.status === 'Pending' ? (
+                                <button
+                                  onClick={async () => {
+                                    setLoadingBookings(prev => ({...prev, [o.id]: true}));
+                                    try {
+                                      const res = await fetch('https://portal.packzy.com/api/v1/create_order', {
+                                        method: 'POST',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          'Api-Key': 'sjg2zq4pzai6isaaolupaf1iaily32vk',
+                                          'Secret-Key': 'd7od4knpcjhxycnnlmk3oe9r'
+                                        },
+                                        body: JSON.stringify({
+                                          invoice: o.id,
+                                          recipient_name: o.customerName,
+                                          recipient_phone: o.phone,
+                                          recipient_address: o.address,
+                                          cod_amount: o.total
+                                        })
+                                      });
+                                      const data = await res.json();
+                                      if (data.status === 200) {
+                                        updateOrderStatus(o.id, 'Shipped');
+                                        addNotification('কুরিয়ারে বুক করা হয়েছে 🚚', `অর্ডার #${o.id} সফলভাবে Steadfast কুরিয়ারে বুক করা হয়েছে। ট্র্যাকিং আইডি: ${data.consignment.tracking_code}`);
+                                      } else {
+                                        alert('Error: ' + (data.message || 'Failed to create consignment'));
+                                      }
+                                    } catch (error) {
+                                      console.error(error);
+                                      alert('Error connecting to Courier API');
+                                    } finally {
+                                      setLoadingBookings(prev => ({...prev, [o.id]: false}));
                                     }
-                                  } catch (error) {
-                                    console.error(error);
-                                    alert('Error connecting to Courier API');
-                                  } finally {
-                                    setLoadingBookings(prev => ({...prev, [o.id]: false}));
-                                  }
-                                }}
-                                disabled={loadingBookings[o.id]}
-                                className="bg-[#0b3d18] hover:bg-[#0a3114] text-white text-xs font-bold py-2.5 px-5 rounded-xl transition-all shadow-sm shadow-[#0b3d18]/20 hover:shadow-[#0b3d18]/40 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 w-full sm:w-auto"
-                              >
-                                {loadingBookings[o.id] ? (
-                                  <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> বুকিং হচ্ছে...</>
-                                ) : (
-                                  <><Send size={14} /> বুকিং করুন</>
-                                )}
-                              </button>
-                            ) : (
-                              <button className="bg-slate-50 text-slate-400 border border-slate-200 text-xs font-bold py-2.5 px-5 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5 w-full sm:w-auto">
-                                <Check size={14} /> বুক করা হয়েছে
-                              </button>
-                            )}
+                                  }}
+                                  disabled={loadingBookings[o.id]}
+                                  className="w-full bg-[#0b3d18] hover:bg-[#0a3114] text-white text-[13px] font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 mt-auto"
+                                >
+                                  {loadingBookings[o.id] ? (
+                                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> বুকিং হচ্ছে...</>
+                                  ) : (
+                                    <><Send size={15} /> Steadfast এ বুক করুন</>
+                                  )}
+                                </button>
+                              ) : (
+                                <button disabled className="w-full bg-slate-50 text-slate-400 text-[13px] font-bold py-2.5 px-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 border border-slate-200 mt-auto">
+                                  <Check size={15} /> বুক করা হয়েছে
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      );
-                    })}
+                      );               })}
                   </div>
                 </div>
               </div>
@@ -5874,15 +5723,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        if (file.size > 2 * 1024 * 1024) {
-                          alert('ফাইলের সাইজ ২ এমবির বেশি হতে পারবে না');
+                        if (file.size > 500 * 1024) {
+                          alert('ফাইলের সাইজ ৫০০ কেবির বেশি হতে পারবে না');
                           return;
                         }
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setProductFormData(p => ({ ...p, image: reader.result as string }));
-                        };
-                        reader.readAsDataURL(file);
+                        compressImage(file, 600, 0.6).then(base64 => {
+                          setProductFormData(p => ({ ...p, image: base64 }));
+                        });
                       }
                     }}
                     className="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
@@ -6066,6 +5913,64 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       )}
 
+
+      {/* Courier Note Modal */}
+      {editingCourierNoteOrderId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingCourierNoteOrderId(null)}></div>
+          <div className="bg-white rounded-xl w-full max-w-sm p-5 relative z-10 animate-in fade-in zoom-in-95">
+            <h3 className="font-bold text-slate-800 mb-3">কুরিয়ার নোট দিন</h3>
+            <textarea
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none mb-4 min-h-[100px]"
+              placeholder="কুরিয়ার ম্যানের জন্য নোট লিখুন..."
+              value={courierNoteText}
+              onChange={(e) => setCourierNoteText(e.target.value)}
+            ></textarea>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setEditingCourierNoteOrderId(null)} className="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">বাতিল</button>
+              <button 
+                onClick={() => {
+                  if (updateOrder) updateOrder(editingCourierNoteOrderId, { courierNote: courierNoteText });
+                  setEditingCourierNoteOrderId(null);
+                }} 
+                className="px-4 py-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+              >
+                সেভ করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tracking ID Modal */}
+      {editingTrackingOrderId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingTrackingOrderId(null)}></div>
+          <div className="bg-white rounded-xl w-full max-w-sm p-5 relative z-10 animate-in fade-in zoom-in-95">
+            <h3 className="font-bold text-slate-800 mb-3">ট্র্যাকিং আইডি আপডেট করুন</h3>
+            <input
+              type="text"
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none mb-4"
+              placeholder="যেমন: STEADFAST-12345"
+              value={trackingIdText}
+              onChange={(e) => setTrackingIdText(e.target.value)}
+            />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setEditingTrackingOrderId(null)} className="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">বাতিল</button>
+              <button 
+                onClick={() => {
+                  if (updateOrder) updateOrder(editingTrackingOrderId, { trackingId: trackingIdText });
+                  setEditingTrackingOrderId(null);
+                }} 
+                className="px-4 py-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+              >
+                সেভ করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Courier Booking Modal */}
       {bookingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -6095,27 +6000,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                   <div>
                     <label className="block text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2">কুরিয়ার সার্ভিস নির্বাচন করুন</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button 
-                        type="button" 
-                        onClick={() => setCourierService('pathao')}
-                        className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-sm font-medium uppercase ${
-                          courierService === 'pathao' ? 'bg-[#ff2200]/10 border-[#ff2200] text-[#ff2200]' : 'border-slate-200 text-slate-600 hover:bg-[#f8fafc]'
-                        }`}
-                      >
-                        <span className="text-[10px]">Pathao</span>
-                        <span className="text-[9px] text-slate-500 font-medium">ইনস্ট্যান্ট বুক</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => setCourierService('redx')}
-                        className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-sm font-medium uppercase ${
-                          courierService === 'redx' ? 'bg-red-600/10 border-red-600 text-red-600' : 'border-slate-200 text-slate-600 hover:bg-[#f8fafc]'
-                        }`}
-                      >
-                        <span className="text-[10px]">RedX</span>
-                        <span className="text-[9px] text-slate-500 font-medium">হোম ডেলিভারি</span>
-                      </button>
+                    <div className="grid grid-cols-1 gap-2">
+                      
+                      
                       <button 
                         type="button" 
                         onClick={() => setCourierService('steadfast')}
@@ -6280,7 +6167,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       )}
 
 
-      {/* Customer History Modal */}
       {selectedCustomerHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-[24px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
@@ -6306,7 +6192,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .map((order, idx) => (
                     <div key={idx} className="border border-slate-200 rounded-xl p-4 bg-[#f8fafc]">
-                      <div className="flex justify-between items-center mb-3 pb-3 border-b border-slate-200/50">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 pb-3 border-b border-slate-200/50">
                         <div>
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-0.5">অর্ডার তারিখ</span>
                           <span className="text-sm font-medium text-slate-800">{new Date(order.date).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>

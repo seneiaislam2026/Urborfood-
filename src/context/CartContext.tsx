@@ -42,6 +42,8 @@ export interface Order {
   status: 'Pending' | 'Confirmed' | 'Shipped' | 'Completed' | 'Cancelled';
   salesman?: string;
   source?: 'website' | 'facebook' | 'whatsapp' | 'shop';
+  trackingId?: string;
+  courierNote?: string;
 }
 
 export interface AppNotification {
@@ -75,6 +77,7 @@ interface CartContextType {
   placeOrder: (customerName: string, phone: string, address: string) => string;
   placeDirectOrder: (customerName: string, phone: string, address: string, product: Product, quantity: number) => string;
   updateOrderStatus: (id: string, status: 'Pending' | 'Confirmed' | 'Shipped' | 'Completed' | 'Cancelled') => void;
+  updateOrder: (id: string, payload: Partial<Order>) => void;
   deleteOrder: (id: string) => void;
 
   // Stateful Products management
@@ -260,7 +263,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [products, setProducts] = useState<Product[]>(mockProducts.map(p => ({ ...p, stock: 20, lowStockAlert: 5 })));
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -651,6 +654,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const updateOrder = (id: string, payload: Partial<Order>) => {
+    setOrders(prev => {
+      const updated = prev.map(order => 
+        order.id === id ? { ...order, ...payload } : order
+      );
+      if (isClient) {
+        setDoc(doc(db, 'appData', 'orders'), { data: JSON.parse(JSON.stringify(updated)) });
+      }
+      return updated;
+    });
+  };
+
   const deleteOrder = (id: string) => {
     setOrders(prev => {
       const updated = prev.filter(order => order.id !== id);
@@ -789,6 +804,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       placeOrder,
       placeDirectOrder,
       updateOrderStatus,
+      updateOrder,
       deleteOrder,
       incompleteOrders,
       updateIncompleteOrder,

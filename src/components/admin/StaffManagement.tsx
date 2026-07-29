@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, CheckCircle2, XCircle, Trash2, Calendar as CalendarIcon, DollarSign, Save } from 'lucide-react';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../../utils/storage';
+import { db } from '../../firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 
 interface StaffMember {
@@ -8,6 +10,8 @@ interface StaffMember {
   name: string;
   role: string;
   baseSalary: number;
+  username?: string;
+  password?: string;
 }
 
 interface AttendanceRecord {
@@ -21,7 +25,7 @@ export default function StaffManagement() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newStaff, setNewStaff] = useState({ name: '', role: '', baseSalary: '' });
+  const [newStaff, setNewStaff] = useState({ name: '', role: '', baseSalary: '', username: '', password: '' });
   
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date();
@@ -38,16 +42,32 @@ export default function StaffManagement() {
     
     const savedAttendance = safeGetItem('urbor_staff_attendance');
     if (savedAttendance) setAttendance(JSON.parse(savedAttendance));
+
+    const unsubAttendance = onSnapshot(doc(db, 'appData', 'staff_attendance'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.attendance) {
+          setAttendance(data.attendance);
+          safeSetItem('urbor_staff_attendance', JSON.stringify(data.attendance));
+        }
+      }
+    });
+
+    return () => {
+      unsubAttendance();
+    };
   }, []);
 
   const saveStaff = (newStaffList: StaffMember[]) => {
     setStaffList(newStaffList);
     safeSetItem('urbor_staff_list', JSON.stringify(newStaffList));
+    setDoc(doc(db, 'appData', 'staff'), { staffList: newStaffList }, { merge: true }).catch(console.error);
   };
 
   const saveAttendance = (newAttendance: AttendanceRecord[]) => {
     setAttendance(newAttendance);
     safeSetItem('urbor_staff_attendance', JSON.stringify(newAttendance));
+    setDoc(doc(db, 'appData', 'staff_attendance'), { attendance: newAttendance }, { merge: true }).catch(console.error);
   };
 
   const handleAddStaff = (e: React.FormEvent) => {
@@ -59,6 +79,8 @@ export default function StaffManagement() {
       name: newStaff.name,
       role: newStaff.role || 'Staff',
       baseSalary: Number(newStaff.baseSalary),
+      username: newStaff.username,
+      password: newStaff.password,
     };
     
     saveStaff([...staffList, staff]);
@@ -351,6 +373,26 @@ export default function StaffManagement() {
                   onChange={e => setNewStaff({...newStaff, baseSalary: e.target.value})}
                   className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all bg-slate-50 focus:bg-white"
                   placeholder="যেমন: 15000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">ইউজারনেম (লগইন এর জন্য)</label>
+                <input 
+                  type="text" 
+                  value={newStaff.username}
+                  onChange={e => setNewStaff({...newStaff, username: e.target.value})}
+                  className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all bg-slate-50 focus:bg-white"
+                  placeholder="যেমন: rahim123"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">পাসওয়ার্ড</label>
+                <input 
+                  type="text" 
+                  value={newStaff.password}
+                  onChange={e => setNewStaff({...newStaff, password: e.target.value})}
+                  className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all bg-slate-50 focus:bg-white"
+                  placeholder="স্টাফের লগইন পাসওয়ার্ড"
                 />
               </div>
               <div className="pt-2">

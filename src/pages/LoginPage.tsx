@@ -38,11 +38,30 @@ export default function LoginPage() {
       if (isOldAdmin) {
         if (typeof window !== 'undefined') {
           safeSetItem('urbor_admin_auth', 'true');
+          safeRemoveItem('urbor_staff_auth');
           safeRemoveItem('urbor_customer_auth');
           window.location.hash = '#admin';
         }
         return;
       }
+      // Check staff login
+      const staffListRaw = safeGetItem('urbor_staff_list');
+      if (staffListRaw) {
+        try {
+          const staffs = JSON.parse(staffListRaw);
+          const staff = staffs.find((s: any) => s.username === identifier.trim() && s.password === password);
+          if (staff) {
+            safeSetItem('urbor_staff_auth', 'true');
+            safeSetItem('urbor_staff_id', staff.id);
+            safeSetItem('urbor_staff_name', staff.name);
+            safeRemoveItem('urbor_admin_auth');
+            safeRemoveItem('urbor_customer_auth');
+            window.location.hash = '#admin';
+            return;
+          }
+        } catch(e) {}
+      }
+
       
       if (typeof window !== 'undefined') {
         safeRemoveItem('urbor_admin_auth');

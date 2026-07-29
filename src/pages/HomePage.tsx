@@ -152,11 +152,27 @@ export default function HomePage() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-               {products.slice(0, 8).map(product => (
-                 <ProductCard key={product.id} product={product} />
-               ))}
-            </div>
+            {isLoadingProducts ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-3 sm:p-4 animate-pulse">
+                    <div className="w-full aspect-square bg-slate-200 rounded-xl mb-4"></div>
+                    <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-slate-200 rounded w-1/2 mb-4"></div>
+                    <div className="flex justify-between items-center">
+                      <div className="h-5 bg-slate-200 rounded w-1/3"></div>
+                      <div className="w-8 h-8 bg-slate-200 rounded-full"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                 {products.slice(0, 8).map(product => (
+                   <ProductCard key={product.id} product={product} />
+                 ))}
+              </div>
+            )}
             
             <div className="flex justify-center mt-10">
               <button className="bg-white border-2 border-emerald-500 text-emerald-600 px-8 py-3 rounded-xl text-sm font-black hover:bg-emerald-50 transition-colors cursor-pointer shadow-sm">
@@ -173,11 +189,30 @@ export default function HomePage() {
                 <p className="text-sm text-slate-500 font-medium">আজই খামার থেকে সংগ্রহ করা হয়েছে। দ্রুত অর্ডার করুন, স্টক সীমিত!</p>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {products.slice(0, 2).map((product, i) => (
-                  <div key={i} className="bg-white rounded-3xl p-5 md:p-6 flex flex-col sm:flex-row gap-6 items-center border border-emerald-100/50 shadow-xl shadow-emerald-900/5 group cursor-pointer" onClick={() => window.location.hash = '#product=' + product.id}>
+              {isLoadingProducts ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-3xl p-5 md:p-6 flex flex-col sm:flex-row gap-6 items-center border border-emerald-100/50 animate-pulse">
+                      <div className="w-32 h-32 md:w-40 md:h-40 flex-shrink-0 bg-slate-200 rounded-2xl"></div>
+                      <div className="flex flex-col flex-1 w-full space-y-3">
+                        <div className="h-4 bg-slate-200 rounded w-1/4 mb-2"></div>
+                        <div className="h-6 bg-slate-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-slate-200 rounded w-full"></div>
+                        <div className="h-4 bg-slate-200 rounded w-5/6 mb-4"></div>
+                        <div className="flex justify-between items-end mt-4">
+                          <div className="h-6 bg-slate-200 rounded w-1/3"></div>
+                          <div className="h-10 bg-slate-200 rounded w-32"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {products.slice(0, 2).map((product, i) => (
+                    <div key={i} className="bg-white rounded-3xl p-5 md:p-6 flex flex-col sm:flex-row gap-6 items-center border border-emerald-100/50 shadow-xl shadow-emerald-900/5 group cursor-pointer" onClick={() => window.location.hash = '#product=' + product.id}>
                     <div className="w-32 h-32 md:w-40 md:h-40 flex-shrink-0 bg-slate-50 rounded-2xl overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                       <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                       <img src={product.image} alt={product.name} loading="lazy" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex flex-col flex-1 w-full">
                       <div className="flex items-center gap-2 mb-2">
@@ -214,6 +249,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
+              )}
             </div>
           </section>
           <div id="reviews">

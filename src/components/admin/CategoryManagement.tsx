@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Tag, Plus, Trash2, Edit, Save, XCircle } from 'lucide-react';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../../utils/storage';
 import { useUI } from '../../context/UIContext';
+import { compressImage } from '../../utils/imageUtils';
 
 
 export default function CategoryManagement() {
-  const { categories, setCategories } = useUI();
+  const { categories, setCategories, updateSettingsInDB } = useUI();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCategory, setNewCategory] = useState<{id: string, name: string, image?: string}>({ id: '', name: '', image: '' });
 
@@ -14,6 +15,9 @@ export default function CategoryManagement() {
   const saveCategories = (cats: {id: string, name: string}[]) => {
     setCategories(cats);
     safeSetItem('urbor_custom_categories', JSON.stringify(cats));
+    if (updateSettingsInDB) {
+      updateSettingsInDB({ categories: cats });
+    }
   };
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -130,15 +134,13 @@ export default function CategoryManagement() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      if (file.size > 1 * 1024 * 1024) {
-                        alert('ফাইলের সাইজ ১ এমবির বেশি হতে পারবে না');
+                      if (file.size > 500 * 1024) {
+                        alert('ফাইলের সাইজ ৫০০ কেবির বেশি হতে পারবে না');
                         return;
                       }
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setNewCategory({...newCategory, image: reader.result as string});
-                      };
-                      reader.readAsDataURL(file);
+                      compressImage(file, 400, 0.6).then(base64 => {
+                        setNewCategory({...newCategory, image: base64});
+                      });
                     }
                   }}
                   className="w-full border-2 border-slate-100 rounded-xl px-4 py-2.5 text-sm font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all bg-slate-50 focus:bg-white"

@@ -61,7 +61,7 @@ export default function CartDrawer() {
       
       // Update incomplete order in background if they typed a phone
       if (newData.phone && newData.phone.length >= 3) {
-         if (updateIncompleteOrder) updateIncompleteOrder(newData);
+         if (updateIncompleteOrder) updateIncompleteOrder({ customerName: newData.name, phone: newData.phone, address: newData.address });
       }
       
       // Auto-fill existing customer details if phone matches

@@ -40,7 +40,14 @@ export default function Layout() {
   const [currentView, setCurrentView] = useState<'store' | 'admin' | 'landing' | 'login'>(() => {
     if (typeof window === 'undefined') return 'store';
     if (window.location.hash === '#login') return 'login';
-    if (window.location.hash === '#admin') return 'admin';
+    if (window.location.hash === '#admin') {
+      const isAuth = localStorage.getItem('urbor_admin_auth') === 'true' || localStorage.getItem('urbor_staff_auth') === 'true';
+      if (!isAuth) {
+        window.location.hash = '#login';
+        return 'login';
+      }
+      return 'admin';
+    }
     if (getProductIdFromUrl()) return 'landing';
     return 'store';
   });
@@ -59,7 +66,13 @@ export default function Layout() {
         setCurrentView('login');
         setLandingProductId(null);
       } else if (window.location.hash === '#admin') {
-        setCurrentView('admin');
+        const isAuth = localStorage.getItem('urbor_admin_auth') === 'true' || localStorage.getItem('urbor_staff_auth') === 'true';
+        if (!isAuth) {
+          window.location.hash = '#login';
+          setCurrentView('login');
+        } else {
+          setCurrentView('admin');
+        }
         setLandingProductId(null);
       } else if (prodId) {
         setCurrentView('landing');

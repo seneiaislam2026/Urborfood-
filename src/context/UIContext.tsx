@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Product } from '../types';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
+import { db } from '../firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useEffect } from 'react';
 
 
 interface UIContextType {
@@ -22,6 +25,7 @@ interface UIContextType {
   setLogoUrl: (url: string) => void;
   categories: {id: string, name: string, image?: string}[];
   setCategories: (cats: {id: string, name: string, image?: string}[]) => void;
+  updateSettingsInDB?: (settings: any) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -35,6 +39,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [isMyOrdersOpen, setIsMyOrdersOpen] = useState<boolean>(false);
   const [heroBannerUrl, setHeroBannerUrl] = useState<string>(safeGetItem('urbor_hero_banner') || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1200');
   const [logoUrl, setLogoUrl] = useState<string>(safeGetItem('urbor_logo_url') || '/logo.svg');
+  const isClient = typeof window !== 'undefined';
+
   const [categories, setCategories] = useState<{id: string, name: string, image?: string}[]>(() => {
     const saved = safeGetItem('urbor_custom_categories');
     if (saved) return JSON.parse(saved);
@@ -47,6 +53,32 @@ export function UIProvider({ children }: { children: ReactNode }) {
       { id: 'dairy', name: '🥛 ডেইরি ও মাখন', image: 'https://images.unsplash.com/photo-1585237833075-84724ff08b02?auto=format&fit=crop&q=80&w=200' }
     ];
   });
+
+  useEffect(() => {
+    if (!isClient) return;
+    const unsub = onSnapshot(doc(db, 'appData', 'ui_settings'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.heroBannerUrl) setHeroBannerUrl(data.heroBannerUrl);
+        if (data.logoUrl) setLogoUrl(data.logoUrl);
+        if (data.categories) setCategories(data.categories);
+      } else {
+        // init
+        setDoc(doc(db, 'appData', 'ui_settings'), {
+          heroBannerUrl: safeGetItem('urbor_hero_banner') || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1200',
+          logoUrl: safeGetItem('urbor_logo_url') || '/logo.svg',
+          categories: categories
+        }).catch(console.error);
+      }
+    });
+    return () => unsub();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClient]);
+
+  const updateSettingsInDB = (settings: any) => {
+    if (!isClient) return;
+    setDoc(doc(db, 'appData', 'ui_settings'), settings, { merge: true }).catch(console.error);
+  };
   
   return (
     <UIContext.Provider value={{ 
@@ -67,7 +99,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
       logoUrl,
       setLogoUrl,
       categories,
-      setCategories
+      setCategories,
+      updateSettingsInDB
     }}>
       {children}
     </UIContext.Provider>

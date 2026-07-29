@@ -2,6 +2,7 @@ import { MapPin, Phone, Mail, Facebook, Instagram, Twitter, Linkedin, MessageCir
 import { useUI } from '../../context/UIContext';
 
 export default function Footer() {
+  const { logoUrl } = useUI();
 
   return (
     <footer className="bg-white border-t border-gray-100 text-slate-800 pt-16">
@@ -11,15 +12,13 @@ export default function Footer() {
           {/* Brand Col */}
           <div>
             <div className="flex items-center gap-1.5 mb-4">
-                <div className="w-5 h-5 text-[#00a651]">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM11 19.93C7.06 19.43 4 16.05 4 12C4 7.95 7.06 4.57 11 4.07V19.93ZM13 4.07C16.94 4.57 20 7.95 20 12C20 16.05 16.94 19.43 13 19.93V4.07Z" />
-                  </svg>
+                <div className="w-6 h-6 rounded-md overflow-hidden bg-white flex items-center justify-center border border-slate-100 shadow-sm">
+                  <img src={logoUrl} alt="Urbor Food Logo" className="w-full h-full object-contain" />
                 </div>
                 <span className="text-xl font-black text-[#00a651] tracking-tight">উর্বর ফুড</span>
             </div>
-            <p className="text-[11px] text-gray-500 font-bold mb-6 leading-relaxed max-w-[220px]">
-              তাজা দেশি মুরগি, মাছ, সবজি ও নিত্যপ্রয়োজনীয় পণ্য সরাসরি কৃষক ও খামারিদের কাছ থেকে সংগ্রহ করা হয়।
+            <p className="text-[11px] text-gray-500 font-bold mb-6 leading-relaxed max-w-[260px]">
+              উর্বর ফুড একটি বিশ্বস্ত খাদ্য ব্র্যান্ড, যার লক্ষ্য প্রান্তিক কৃষক ও নির্ভরযোগ্য উৎপাদকদের কাছ থেকে সংগ্রহ করা নিরাপদ, বিশুদ্ধ ও মানসম্মত খাদ্যপণ্য প্রতিটি পরিবারের কাছে পৌঁছে দেওয়া।
             </p>
             <div className="flex gap-3">
               <a href="https://www.facebook.com/UrborFood" target="_blank" rel="noopener noreferrer" className="text-[#00a651] hover:text-green-700 transition-colors">
@@ -95,8 +94,7 @@ export default function Footer() {
              <a href="#" className="hover:text-[#00a651] transition-colors">গোপনীয়তা নীতি</a>
              <a href="#" className="hover:text-[#00a651] transition-colors">শর্তাবলি</a>
              <a href="#" className="hover:text-[#00a651] transition-colors">রিটার্ন নীতি</a>
-             <span className="text-gray-300 hidden sm:inline">|</span>
-             <a href="#admin" className="hover:text-[#00a651] transition-colors text-slate-600 font-black bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded border border-slate-200 shadow-sm transition-all text-[11px]">অ্যাডমিন প্যানেল</a>
+             
           </div>
         </div>
       </div>
