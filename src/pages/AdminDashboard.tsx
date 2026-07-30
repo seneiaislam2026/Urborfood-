@@ -1139,6 +1139,18 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </nav>
 
           <div className="mt-8 space-y-4">
+            {/* Shop Location */}
+            <button 
+                  onClick={() => window.open("https://maps.app.goo.gl/eb9E5JaFmemKiPE39", "_blank")}
+                  className="w-full flex items-center justify-between bg-blue-50 hover:bg-blue-100 border border-blue-100 hover:border-blue-200 px-4 py-3.5 rounded-2xl transition-all group"
+                >
+              <div className="flex items-center gap-3 text-blue-600 font-bold text-[15px]">
+                <MapPin size={20} strokeWidth={2.5} className="group-hover:-translate-y-0.5 transition-transform" /> 
+                {lang === 'bn' ? 'শপ লোকেশন' : 'Shop Location'}
+              </div>
+              <ExternalLink size={18} className="text-blue-300 group-hover:text-blue-500 transition-all" strokeWidth={2.5} />
+            </button>
+
             {/* Language Selection */}
             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm shadow-slate-200/50">
               <div className="flex items-center gap-2 text-slate-500 font-bold mb-3">
@@ -1265,6 +1277,18 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </nav>
 
               <div className="mt-8 space-y-4">
+                {/* Shop Location */}
+                <button 
+                  onClick={() => { window.open("https://maps.app.goo.gl/eb9E5JaFmemKiPE39", "_blank"); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center justify-between bg-blue-50 hover:bg-blue-100 border border-blue-100 hover:border-blue-200 px-4 py-3.5 rounded-2xl transition-all group"
+                >
+                  <div className="flex items-center gap-3 text-blue-600 font-bold text-[15px]">
+                    <MapPin size={20} strokeWidth={2.5} className="group-hover:-translate-y-0.5 transition-transform" /> 
+                    {lang === 'bn' ? 'শপ লোকেশন' : 'Shop Location'}
+                  </div>
+                  <ExternalLink size={18} className="text-blue-300 group-hover:text-blue-500 transition-all" strokeWidth={2.5} />
+                </button>
+
                 {/* Mobile Language Selection option */}
                 <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm shadow-slate-200/50">
                   <div className="flex items-center gap-2 text-slate-500 font-bold mb-3">
@@ -1788,7 +1812,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </tr>
                         ) : (
                           orders.slice(0, 4).map((order) => {
-                            const isCompleted = order.status === 'Completed';
+                            const isCompleted = order.status === 'Delivered';
                             const isCancelled = order.status === 'Cancelled';
                             const initials = order.customerName ? order.customerName.substring(0, 2) : 'গ্র';
                             return (
@@ -1849,7 +1873,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <div className="p-10 text-center text-slate-500 font-medium bg-white rounded-2xl border border-slate-200/80">কোন অর্ডার রেকর্ড নেই।</div>
                     ) : (
                       orders.slice(0, 4).map((order) => {
-                        const isCompleted = order.status === 'Completed';
+                        const isCompleted = order.status === 'Delivered';
                         const isCancelled = order.status === 'Cancelled';
                         const initials = order.customerName ? order.customerName.substring(0, 2) : 'গ্র';
                         
@@ -2448,7 +2472,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-w-0">
               
               {/* Header inside Tab */}
-              <div className="p-4 md:p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none">
+              <div className="p-4 md:p-5 border-b border-gray-100 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 select-none">
                 <div>
                   <h3 className="font-semibold text-base text-slate-800">
                     {lang === 'bn' ? 'অর্ডার সমূহ' : 'Orders List'} ({filteredOrdersList.length} {lang === 'bn' ? 'টি' : 'orders'})
@@ -2458,7 +2482,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </p>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 w-full xl:w-auto">
                   {/* Search bar inside block */}
                   <div className="relative w-full sm:w-auto">
                     <input 
@@ -2523,7 +2547,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </tr>
                     ) : (
                       filteredOrdersList.map((order) => {
-                        const isCompleted = order.status === 'Completed';
+                        const isCompleted = order.status === 'Delivered';
                         const isCancelled = order.status === 'Cancelled';
                         const itemsSummary = order.items.map(it => `${it.name} (${it.quantity}x)`).join(', ');
                         return (
@@ -2576,7 +2600,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             {/* Quick Icon Actions */}
                             <td className="py-2.5 px-3 pr-4 align-middle text-center select-none">
                               <div className="flex items-center justify-center gap-1 flex-wrap w-24 mx-auto">
-                                <a href={`https://steadfast.com.bd/fraud-checker?phone=${order.phone}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-100 cursor-pointer" title="ফ্রড চেকার">
+                                <a href={`https://fraudbd.com/?search=${order.phone}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-100 cursor-pointer" title="ফ্রড চেকার">
                                   <ShieldAlert size={14} />
                                 </a>
                                 <button onClick={() => setSelectedOrder(order)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 cursor-pointer" title="অর্ডার বিবরণ দেখুন"><Eye size={14} /></button>
@@ -2601,16 +2625,17 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   filteredOrdersList.map((order) => (
                     <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500/30 hover:shadow-md transition-all p-5 flex flex-col gap-4">
                       {/* Card Header: Order ID & Status */}
-                      <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
                         <span className="text-[12px] text-slate-800 font-black bg-slate-100 px-2 py-1 rounded">#{order.id}</span>
                         <span className={`inline-flex items-center text-center px-2.5 py-1.5 rounded-md text-[10px] font-black tracking-wide ${
-                          order.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' :
-                          order.status === 'Shipped' ? 'bg-blue-50 text-blue-600 border border-blue-100/50' :
+                          order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' :
+                          (order.status === 'Courier' || order.status === 'Return') ? 'bg-purple-50 text-purple-600 border border-purple-100/50' :
+                          order.status === 'Processing' ? 'bg-blue-50 text-blue-600 border border-blue-100/50' :
                           order.status === 'Confirmed' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100/50' :
                           order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-100/50' :
                           'bg-amber-50 text-amber-600 border border-amber-100/50'
                         }`}>
-                          {order.status === 'Completed' ? 'ডেলিভারি সম্পন্ন' : order.status === 'Cancelled' ? 'বাতিল' : order.status === 'Shipped' ? 'ডেলিভারি পার্টনারের কাছে হস্তান্তরিত' : order.status === 'Confirmed' ? 'পণ্য প্রস্তুত করা হচ্ছে' : 'পেন্ডিং'}
+                          {order.status === 'Delivered' ? 'ডেলিভারি সম্পন্ন' : order.status === 'Cancelled' ? 'বাতিল' : order.status === 'Courier' ? 'কুরিয়ার' : order.status === 'Processing' ? 'প্রসেসিং' : order.status === 'Confirmed' ? 'কনফার্মড' : order.status === 'Return' ? 'রিটার্ন' : 'পেন্ডিং'}
                         </span>
                       </div>
 
@@ -2653,7 +2678,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           <span className="text-[18px] font-black text-slate-900 whitespace-nowrap">৳{order.total}</span>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="flex flex-col gap-2 mb-2">
                            <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as any)} className="px-3 py-2.5 rounded-lg border border-slate-200 text-[11px] font-bold outline-none focus:border-emerald-500 bg-slate-50 text-slate-700 w-full cursor-pointer">
                             <option value="Pending">Pending</option>
                             <option value="Processing">Processing</option>
@@ -2665,7 +2690,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </select>
                           
                           <a 
-                            href={`https://steadfast.com.bd/fraud-checker?phone=${order.phone}`}
+                            href={`https://fraudbd.com/?search=${order.phone}`}
                             target="_blank" rel="noopener noreferrer"
                             className="bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer border border-purple-100"
                           >

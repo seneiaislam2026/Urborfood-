@@ -94,15 +94,15 @@ export default function Layout() {
   return (
     <div className="flex flex-col min-h-screen relative">
       <Helmet>
-        <title>Urbor Food - শতভাগ ফ্রেশ সামুদ্রিক মাছ, দেশি খাসি, গরু, মুরগি ও দুগ্ধজাত সামগ্রী</title>
+        <title>Urbor Food</title>
         <meta name="description" content="ক্ষতিকর কেমিক্যালমুক্ত শতভাগ ফ্রেশ সামুদ্রিক মাছ, খাসি, গরু, মুরগি, খাঁটি দুধ ও উন্নতমানের ডিম ঢাকার যেকোনো প্রান্তে ক্যাশ অন ডেলিভারিতে দ্রুত হোম ডেলিভারি। Urbor Food." />
         <meta name="keywords" content="Urbor Food, উর্বর ফুড, নিরাপদ খাদ্য, সামুদ্রিক মাছ, খাসির মাংস, গরুর মাংস, দেশি মুরগি, খাঁটি দুধ, ডিম, অনলাইন বাজার ঢাকা" />
         <link rel="canonical" href="https://www.urborfood.com/" />
-        <meta property="og:title" content="Urbor Food - শতভাগ ফ্রেশ সামুদ্রিক মাছ, দেশি খাসি, গরু, মুরগি ও দুগ্ধজাত সামগ্রী" />
+        <meta property="og:title" content="Urbor Food" />
         <meta property="og:description" content="ক্ষতিকর কেমিক্যালমুক্ত শতভাগ ফ্রেশ সামুদ্রিক মাছ, খাসি, গরু, মুরগি, খাঁটি দুধ ও উন্নতমানের ডিম ঢাকার যেকোনো প্রান্তে ক্যাশ অন ডেলিভারিতে দ্রুত হোম ডেলিভারি।" />
         <meta property="og:url" content="https://www.urborfood.com/" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Urbor Food - শতভাগ ফ্রেশ সামুদ্রিক মাছ, দেশি খাসি, গরু, মুরগি ও দুগ্ধজাত সামগ্রী" />
+        <meta name="twitter:title" content="Urbor Food" />
         <meta name="twitter:description" content="ক্ষতিকর কেমিক্যালমুক্ত শতভাগ ফ্রেশ সামুদ্রিক মাছ, খাসি, গরু, মুরগি, খাঁটি দুধ ও উন্নতমানের ডিম ঢাকার যেকোনো প্রান্তে ক্যাশ অন ডেলিভারিতে দ্রুত হোম ডেলিভারি।" />
       </Helmet>
       {/* Global PWA download banner & real-time order alert pop-ups */}
