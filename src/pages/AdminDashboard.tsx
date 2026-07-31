@@ -5823,68 +5823,117 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       )}
 
       
+      
       {/* Fraud Check Modal */}
       {fraudCheckPhone && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <div className="fixed inset-0 bg-slate-900/70 z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
               <div className="flex items-center gap-2 text-slate-800">
                 <ShieldAlert size={18} className="text-purple-600" />
-                <h3 className="font-bold">ফ্রড চেকার (Steadfast)</h3>
+                <h3 className="font-bold text-sm">ফ্রড চেকার (Steadfast)</h3>
               </div>
-              <button onClick={() => setFraudCheckPhone(null)} className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-1.5 rounded-lg transition-colors border border-slate-200 shadow-sm">
+              <button onClick={() => setFraudCheckPhone(null)} className="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-full transition-colors">
                 <X size={18} />
               </button>
             </div>
             
-            <div className="p-5">
-              <div className="text-center mb-5">
-                <div className="text-2xl font-black text-slate-800 tracking-tight">{fraudCheckPhone}</div>
-                <div className="text-xs text-slate-500 font-medium mt-1">কাস্টমার ডেলিভারি রেকর্ড</div>
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="text-3xl font-black text-slate-800 tracking-tight">{fraudCheckPhone}</div>
+                <div className="text-[13px] text-slate-500 font-medium mt-1">কাস্টমার ডেলিভারি রেকর্ড</div>
               </div>
               
               {isFraudLoading ? (
-                <div className="py-8 flex flex-col items-center justify-center gap-3">
+                <div className="py-10 flex flex-col items-center justify-center gap-4">
                   <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin"></div>
-                  <div className="text-sm font-medium text-slate-500">ডাটা লোড হচ্ছে...</div>
+                  <div className="text-sm font-bold text-slate-500">ডাটা লোড হচ্ছে...</div>
                 </div>
               ) : fraudData ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
                       <div className="text-slate-500 text-[11px] font-bold uppercase mb-1">মোট অর্ডার</div>
-                      <div className="text-xl font-black text-slate-800">{fraudData.total_parcels || 0}</div>
+                      <div className="text-2xl font-black text-slate-800">{fraudData.total_parcels || 0}</div>
                     </div>
-                    <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center">
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
                       <div className="text-emerald-600 text-[11px] font-bold uppercase mb-1">সাকসেস</div>
-                      <div className="text-xl font-black text-emerald-700">{fraudData.total_delivered || 0}</div>
+                      <div className="text-2xl font-black text-emerald-600">{fraudData.total_delivered || 0}</div>
                     </div>
-                    <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 text-center col-span-2">
+                    <div className="bg-white p-4 rounded-xl border border-rose-200 shadow-sm text-center col-span-2">
                       <div className="text-rose-600 text-[11px] font-bold uppercase mb-1">ক্যান্সেল / রিটার্ন</div>
-                      <div className="text-xl font-black text-rose-700">{fraudData.total_cancelled || 0}</div>
+                      <div className="text-2xl font-black text-rose-600">{fraudData.total_cancelled || 0}</div>
                     </div>
                   </div>
                   
                   {fraudData.total_parcels > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
+                    <div className="mt-5">
                       <div className="flex justify-between items-end mb-2">
-                        <span className="text-xs font-bold text-slate-500">ডেলিভারি সাকসেস রেট</span>
-                        <span className="text-lg font-black text-slate-800">
+                        <span className="text-[13px] font-bold text-slate-600">ডেলিভারি সাকসেস রেট</span>
+                        <span className="text-xl font-black text-slate-800">
                           {Math.round((fraudData.total_delivered / fraudData.total_parcels) * 100)}%
                         </span>
                       </div>
-                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
+                          className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000"
                           style={{ width: `${(fraudData.total_delivered / fraudData.total_parcels) * 100}%` }}
                         ></div>
                       </div>
+                      
+                      {/* Suggestion Section */}
+                      {(() => {
+                        const rate = Math.round((fraudData.total_delivered / fraudData.total_parcels) * 100);
+                        if (rate >= 80) {
+                          return (
+                            <div className="mt-5 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+                              <CheckCircle2 size={18} className="text-emerald-600 mt-0.5 shrink-0" />
+                              <div>
+                                <h4 className="text-[13px] font-bold text-emerald-800">অসাধারণ কাস্টমার</h4>
+                                <p className="text-xs text-emerald-700 mt-0.5 font-medium leading-relaxed">নিশ্চিন্তে ক্যাশ অন ডেলিভারি (COD) তে পার্সেল পাঠাতে পারেন।</p>
+                              </div>
+                            </div>
+                          );
+                        } else if (rate >= 60) {
+                          return (
+                            <div className="mt-5 p-3 bg-blue-50 border border-blue-200 rounded-xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+                              <CheckCircle2 size={18} className="text-blue-600 mt-0.5 shrink-0" />
+                              <div>
+                                <h4 className="text-[13px] font-bold text-blue-800">ভালো কাস্টমার</h4>
+                                <p className="text-xs text-blue-700 mt-0.5 font-medium leading-relaxed">ক্যাশ অন ডেলিভারিতে পার্সেল পাঠাতে পারেন।</p>
+                              </div>
+                            </div>
+                          );
+                        } else if (rate >= 40) {
+                          return (
+                            <div className="mt-5 p-3 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+                              <AlertTriangle size={18} className="text-amber-600 mt-0.5 shrink-0" />
+                              <div>
+                                <h4 className="text-[13px] font-bold text-amber-800">রিস্কি কাস্টমার!</h4>
+                                <p className="text-xs text-amber-700 mt-0.5 font-medium leading-relaxed">অগ্রিম ডেলিভারি চার্জ নিয়ে পার্সেল পাঠানো নিরাপদ হবে।</p>
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="mt-5 p-3 bg-rose-50 border border-rose-200 rounded-xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+                              <ShieldAlert size={18} className="text-rose-600 mt-0.5 shrink-0" />
+                              <div>
+                                <h4 className="text-[13px] font-bold text-rose-800">অত্যন্ত রিস্কি কাস্টমার!</h4>
+                                <p className="text-xs text-rose-700 mt-0.5 font-medium leading-relaxed">সম্পূর্ণ মূল্য অথবা ডেলিভারি চার্জ অগ্রিম ছাড়া পার্সেল পাঠানো উচিত নয়।</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                      })()}
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="py-6 text-center text-sm font-medium text-rose-500 bg-rose-50 rounded-xl border border-rose-100">
-                  কোনো তথ্য পাওয়া যায়নি
+                <div className="py-8 text-center bg-slate-50 rounded-xl border border-slate-200 border-dashed">
+                  <ShieldAlert size={32} className="mx-auto text-slate-400 mb-2" />
+                  <div className="text-sm font-bold text-slate-600">কোনো তথ্য পাওয়া যায়নি</div>
+                  <div className="text-xs font-medium text-slate-400 mt-1">এই নাম্বারের কোনো রেকর্ড Steadfast এ নেই</div>
                 </div>
               )}
             </div>
