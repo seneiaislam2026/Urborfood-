@@ -25,10 +25,14 @@ export default function CategoryManagement() {
     if (!newCategory.name || !newCategory.id) return;
     
     // Add or update
-    const exists = categories.find(c => c.id === newCategory.id);
-    if (exists) {
-      saveCategories(categories.map(c => c.id === newCategory.id ? newCategory : c));
+    if (editingId) {
+      saveCategories(categories.map(c => c.id === editingId ? newCategory : c));
     } else {
+      const exists = categories.find(c => c.id === newCategory.id);
+      if (exists) {
+        alert('এই আইডিটি ইতিমধ্যে ব্যবহৃত হচ্ছে।');
+        return;
+      }
       saveCategories([...categories, newCategory]);
     }
     
@@ -55,7 +59,7 @@ export default function CategoryManagement() {
           </div>
         </div>
         <button 
-          onClick={() => { setNewCategory({id:'', name:'', image:''}); setShowAddModal(true); }}
+          onClick={() => { setEditingId(null); setNewCategory({id:'', name:'', image:''}); setShowAddModal(true); }}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-600/20 w-full sm:w-auto justify-center"
         >
           <Plus size={20} strokeWidth={2.5} /> নতুন ক্যাটাগরি
@@ -66,35 +70,35 @@ export default function CategoryManagement() {
         <div className="p-6 md:p-8 border-b border-slate-100">
           <h3 className="text-lg font-black text-slate-800">সকল ক্যাটাগরি</h3>
         </div>
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-black tracking-wider">
+            <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-black tracking-wider border-b border-slate-100">
               <tr>
                 <th className="px-6 md:px-8 py-4">ছবি</th>
-                <th className="px-6 md:px-8 py-4">আইডি (Slug)</th>
                 <th className="px-6 md:px-8 py-4">ক্যাটাগরির নাম</th>
+                <th className="px-6 md:px-8 py-4">আইডি (Slug)</th>
                 <th className="px-6 md:px-8 py-4 text-right">অ্যাকশন</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {categories.map(cat => (
                 <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 md:px-8 py-5">
+                  <td className="px-6 md:px-8 py-4">
                     {cat.image ? (
-                      <img src={cat.image} alt={cat.name} className="w-12 h-12 object-cover rounded-lg border border-slate-200" />
+                      <img src={cat.image} alt={cat.name} className="w-12 h-12 object-cover rounded-2xl border border-slate-200 shadow-sm" />
                     ) : (
-                      <div className="w-12 h-12 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400">
+                      <div className="w-12 h-12 bg-slate-100 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-400">
                         <Tag size={20} />
                       </div>
                     )}
                   </td>
-                  <td className="px-6 md:px-8 py-5">
+                  <td className="px-6 md:px-8 py-4 font-black text-slate-800 text-base">{cat.name}</td>
+                  <td className="px-6 md:px-8 py-4">
                     <span className="font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg text-xs">{cat.id}</span>
                   </td>
-                  <td className="px-6 md:px-8 py-5 font-black text-slate-800 text-base">{cat.name}</td>
-                  <td className="px-6 md:px-8 py-5 text-right space-x-2">
+                  <td className="px-6 md:px-8 py-4 text-right space-x-2">
                     <button 
-                      onClick={() => { setNewCategory(cat); setShowAddModal(true); }}
+                      onClick={() => { setEditingId(cat.id); setNewCategory(cat); setShowAddModal(true); }}
                       className="text-blue-500 hover:bg-blue-50 p-2.5 rounded-xl transition-colors inline-flex items-center justify-center border border-transparent hover:border-blue-100"
                     >
                       <Edit size={18} />
@@ -111,13 +115,48 @@ export default function CategoryManagement() {
             </tbody>
           </table>
         </div>
+        
+        {/* Mobile View - Elegant List */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {categories.map(cat => (
+            <div key={cat.id} className="p-4 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
+              {cat.image ? (
+                <img src={cat.image} alt={cat.name} className="w-14 h-14 object-cover rounded-2xl border border-slate-200 shadow-sm shrink-0" />
+              ) : (
+                <div className="w-14 h-14 bg-slate-100 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                  <Tag size={20} />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h4 className="font-black text-slate-800 text-base truncate">{cat.name}</h4>
+                <div className="mt-1">
+                  <span className="font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-wider">{cat.id}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button 
+                  onClick={() => { setEditingId(cat.id); setNewCategory(cat); setShowAddModal(true); }}
+                  className="text-blue-500 bg-blue-50 hover:bg-blue-100 p-2.5 rounded-xl transition-colors inline-flex items-center justify-center"
+                >
+                  <Edit size={18} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(cat.id)}
+                  className="text-rose-500 bg-rose-50 hover:bg-rose-100 p-2.5 rounded-xl transition-colors inline-flex items-center justify-center"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20">
             <div className="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="font-black text-xl text-slate-800">{newCategory.id && categories.find(c=>c.id===newCategory.id) ? 'ক্যাটাগরি আপডেট' : 'নতুন ক্যাটাগরি'}</h3>
+              <h3 className="font-black text-xl text-slate-800">{editingId ? 'ক্যাটাগরি আপডেট' : 'নতুন ক্যাটাগরি'}</h3>
               <button 
                 onClick={() => setShowAddModal(false)} 
                 className="text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 p-2 rounded-full transition-colors border border-slate-100 shadow-sm"

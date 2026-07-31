@@ -39,7 +39,7 @@ export default function Header() {
     { name: '⭐ প্রোডাক্ট রিভিও', action: () => { setIsMobileMenuOpen(false); setTimeout(() => { document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' }); }, 100); } },
     { name: 'শপ', action: () => { window.location.hash = ''; setActiveCategory(null); setIsMobileMenuOpen(false); } },
     { name: 'ক্যাটাগরি', action: () => { window.location.hash = ''; setIsMobileMenuOpen(false); } },
-    { name: '📍 শপ লোকেশন', action: () => { alert('Shop Location:\nH#20, R#2, Block#E, Bosila Garden City, Mohammadpur, Dhaka'); setIsMobileMenuOpen(false); } },
+    { name: '📍 শপ লোকেশন', action: () => { window.open("https://maps.app.goo.gl/eb9E5JaFmemKiPE39", "_blank"); setIsMobileMenuOpen(false); } },
     { name: 'আমাদের সম্পর্কে', action: () => setIsMobileMenuOpen(false) },
   ];
 
@@ -180,7 +180,7 @@ export default function Header() {
               ⭐ প্রোডাক্ট রিভিও
             </button>
             <button
-              onClick={() => { alert('Shop Location:\n\nH#20, R#2, Block#E, Bosila Garden City, Mohammadpur, Dhaka'); setIsMobileMenuOpen(false); }}
+              onClick={() => { window.open("https://maps.app.goo.gl/eb9E5JaFmemKiPE39", "_blank"); setIsMobileMenuOpen(false); }}
               className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[16px] font-bold text-slate-700 hover:text-[#0b6132] hover:bg-emerald-50/70 transition-colors cursor-pointer"
             >
               📍 শপ লোকেশন

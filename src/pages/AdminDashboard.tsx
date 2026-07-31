@@ -61,7 +61,7 @@ import {
   MapPin,
   ChevronDown,
   Tag
-, ChevronRight, MonitorSmartphone, CalendarDays, Copy, ExternalLink, Edit3, ShoppingCart, FileText, Store, ShieldAlert } from 'lucide-react';
+, ChevronRight, MonitorSmartphone, CalendarDays, Copy, ExternalLink, Edit3, ShoppingCart, FileText, Store, ShieldAlert, Image as ImageIcon, Zap } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Product } from '../types';
 import ImageLoader from '../components/ui/ImageLoader';
@@ -619,6 +619,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [bookingId, setBookingId] = useState('');
   
+  const [fraudCheckPhone, setFraudCheckPhone] = useState<string | null>(null);
+  const [fraudData, setFraudData] = useState<any | null>(null);
+  const [isFraudLoading, setIsFraudLoading] = useState(false);
+  
   const [paymentsData, setPaymentsData] = useState<any | null>(null);
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
   const [trackingInvoiceId, setTrackingInvoiceId] = useState('');
@@ -626,6 +630,28 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [isTrackingLoading, setIsTrackingLoading] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState<Record<string, boolean>>({});
 
+
+
+  const handleFraudCheck = async (phone: string) => {
+    setFraudCheckPhone(phone);
+    setIsFraudLoading(true);
+    setFraudData(null);
+    try {
+      const res = await fetch(`https://portal.packzy.com/api/v1/fraud_check/${phone}`, {
+        headers: {
+          'Api-Key': 'sjg2zq4pzai6isaaolupaf1iaily32vk',
+          'Secret-Key': 'd7od4knpcjhxycnnlmk3oe9r'
+        }
+      });
+      const data = await res.json();
+      setFraudData(data);
+    } catch (e) {
+      console.error(e);
+      alert('Error checking fraud');
+    } finally {
+      setIsFraudLoading(false);
+    }
+  };
 
   // CSV Orders Report exporter and downloader
   const handleDownloadCSV = () => {
@@ -1139,17 +1165,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </nav>
 
           <div className="mt-8 space-y-4">
-            {/* Shop Location */}
-            <button 
-                  onClick={() => window.open("https://maps.app.goo.gl/eb9E5JaFmemKiPE39", "_blank")}
-                  className="w-full flex items-center justify-between bg-blue-50 hover:bg-blue-100 border border-blue-100 hover:border-blue-200 px-4 py-3.5 rounded-2xl transition-all group"
-                >
-              <div className="flex items-center gap-3 text-blue-600 font-bold text-[15px]">
-                <MapPin size={20} strokeWidth={2.5} className="group-hover:-translate-y-0.5 transition-transform" /> 
-                {lang === 'bn' ? 'শপ লোকেশন' : 'Shop Location'}
-              </div>
-              <ExternalLink size={18} className="text-blue-300 group-hover:text-blue-500 transition-all" strokeWidth={2.5} />
-            </button>
 
             {/* Language Selection */}
             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm shadow-slate-200/50">
@@ -1277,17 +1292,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </nav>
 
               <div className="mt-8 space-y-4">
-                {/* Shop Location */}
-                <button 
-                  onClick={() => { window.open("https://maps.app.goo.gl/eb9E5JaFmemKiPE39", "_blank"); setIsMobileMenuOpen(false); }}
-                  className="w-full flex items-center justify-between bg-blue-50 hover:bg-blue-100 border border-blue-100 hover:border-blue-200 px-4 py-3.5 rounded-2xl transition-all group"
-                >
-                  <div className="flex items-center gap-3 text-blue-600 font-bold text-[15px]">
-                    <MapPin size={20} strokeWidth={2.5} className="group-hover:-translate-y-0.5 transition-transform" /> 
-                    {lang === 'bn' ? 'শপ লোকেশন' : 'Shop Location'}
-                  </div>
-                  <ExternalLink size={18} className="text-blue-300 group-hover:text-blue-500 transition-all" strokeWidth={2.5} />
-                </button>
 
                 {/* Mobile Language Selection option */}
                 <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm shadow-slate-200/50">
@@ -2600,9 +2604,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             {/* Quick Icon Actions */}
                             <td className="py-2.5 px-3 pr-4 align-middle text-center select-none">
                               <div className="flex items-center justify-center gap-1 flex-wrap w-24 mx-auto">
-                                <a href={`https://fraudbd.com/?search=${order.phone}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-100 cursor-pointer" title="ফ্রড চেকার">
+                                <button onClick={(e) => { e.stopPropagation(); handleFraudCheck(order.phone); }} className="p-1.5 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-100 cursor-pointer" title="ফ্রড চেকার">
                                   <ShieldAlert size={14} />
-                                </a>
+                                </button>
                                 <button onClick={() => setSelectedOrder(order)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 cursor-pointer" title="অর্ডার বিবরণ দেখুন"><Eye size={14} /></button>
                                 <button onClick={() => setInvoiceToPrint(order)} className="p-1.5 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer" title="ইনভয়েস প্রিন্ট করুন"><Printer size={14} /></button>
                                 {!isCompleted && !isCancelled && (<button onClick={() => setBookingOrder(order)} className="p-1.5 text-white bg-emerald-800 hover:bg-emerald-900 rounded-lg transition-all cursor-pointer" title="কুরিয়ার বুকিং করুন"><Truck size={14} /></button>)}
@@ -2689,13 +2693,12 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             <option value="Return">Return</option>
                           </select>
                           
-                          <a 
-                            href={`https://fraudbd.com/?search=${order.phone}`}
-                            target="_blank" rel="noopener noreferrer"
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleFraudCheck(order.phone); }}
                             className="bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer border border-purple-100"
                           >
                             <ShieldAlert size={14} /> ফ্রড চেকার
-                          </a>
+                          </button>
                         </div>
 
                         {/* Action buttons */}
@@ -4064,6 +4067,21 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           {activeTab === 'settings' && (
             <div className="max-w-xl bg-white border border-slate-200 shadow-sm rounded-xl p-6 space-y-6">
+              
+                <div className="border border-slate-200 rounded-xl p-4 md:p-6 bg-slate-50 mt-6">
+                  <h3 className="font-semibold text-base text-slate-800 flex items-center gap-2">
+                    <Download size={18} className="text-emerald-600" /> ডাটা এক্সপোর্ট
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-1 mb-4">আপনার স্টোরের পণ্য ও মূল্য তালিকা পিডিএফ আকারে ডাউনলোড করুন</p>
+                  
+                  <button 
+                    onClick={handlePrintProductList}
+                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download size={18} /> মূল্যসহ প্রোডাক্ট লিস্ট ডাউনলোড
+                  </button>
+                </div>
+
               
               <div>
                 <h3 className="font-semibold text-base text-slate-800">স্টোর ইনফরমেশন সেটিংস</h3>
@@ -5800,6 +5818,76 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      
+      {/* Fraud Check Modal */}
+      {fraudCheckPhone && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div className="flex items-center gap-2 text-slate-800">
+                <ShieldAlert size={18} className="text-purple-600" />
+                <h3 className="font-bold">ফ্রড চেকার (Steadfast)</h3>
+              </div>
+              <button onClick={() => setFraudCheckPhone(null)} className="text-slate-400 hover:text-slate-600 bg-white hover:bg-slate-100 p-1.5 rounded-lg transition-colors border border-slate-200 shadow-sm">
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-5">
+              <div className="text-center mb-5">
+                <div className="text-2xl font-black text-slate-800 tracking-tight">{fraudCheckPhone}</div>
+                <div className="text-xs text-slate-500 font-medium mt-1">কাস্টমার ডেলিভারি রেকর্ড</div>
+              </div>
+              
+              {isFraudLoading ? (
+                <div className="py-8 flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin"></div>
+                  <div className="text-sm font-medium text-slate-500">ডাটা লোড হচ্ছে...</div>
+                </div>
+              ) : fraudData ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                      <div className="text-slate-500 text-[11px] font-bold uppercase mb-1">মোট অর্ডার</div>
+                      <div className="text-xl font-black text-slate-800">{fraudData.total_parcels || 0}</div>
+                    </div>
+                    <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center">
+                      <div className="text-emerald-600 text-[11px] font-bold uppercase mb-1">সাকসেস</div>
+                      <div className="text-xl font-black text-emerald-700">{fraudData.total_delivered || 0}</div>
+                    </div>
+                    <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 text-center col-span-2">
+                      <div className="text-rose-600 text-[11px] font-bold uppercase mb-1">ক্যান্সেল / রিটার্ন</div>
+                      <div className="text-xl font-black text-rose-700">{fraudData.total_cancelled || 0}</div>
+                    </div>
+                  </div>
+                  
+                  {fraudData.total_parcels > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="text-xs font-bold text-slate-500">ডেলিভারি সাকসেস রেট</span>
+                        <span className="text-lg font-black text-slate-800">
+                          {Math.round((fraudData.total_delivered / fraudData.total_parcels) * 100)}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full"
+                          style={{ width: `${(fraudData.total_delivered / fraudData.total_parcels) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-6 text-center text-sm font-medium text-rose-500 bg-rose-50 rounded-xl border border-rose-100">
+                  কোনো তথ্য পাওয়া যায়নি
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
