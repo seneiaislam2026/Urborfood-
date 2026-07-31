@@ -30,7 +30,8 @@ const getCategoryNameInBangla = (slug: string) => {
 
 export default function HomePage() {
   const { activeCategory, setActiveCategory, searchQuery, setSearchQuery } = useUI();
-  const { products, addToCart, isLoadingProducts } = useCart();
+  const { products: allProducts, addToCart, isLoadingProducts } = useCart();
+  const products = allProducts.filter(p => p.showOnWebsite !== false);
 
   // Advanced Category & Search matching filter logic
   const filteredProducts = products.filter(product => {

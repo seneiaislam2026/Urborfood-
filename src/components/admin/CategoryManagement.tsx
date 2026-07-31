@@ -8,6 +8,7 @@ import { compressImage } from '../../utils/imageUtils';
 export default function CategoryManagement() {
   const { categories, setCategories, updateSettingsInDB } = useUI();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState<{id: string, name: string, image?: string}>({ id: '', name: '', image: '' });
 
 

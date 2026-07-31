@@ -13,7 +13,8 @@ interface ProductLandingPageProps {
 
 export default function ProductLandingPage({ productId, onBack }: ProductLandingPageProps) {
   const { selectedProduct, setSelectedProduct } = useUI();
-  const { products, addToCart, placeOrder, clearCart, orders, reviews, addReview, isLoadingProducts } = useCart();
+  const { products: allProducts, addToCart, placeOrder, clearCart, orders, reviews, addReview, isLoadingProducts } = useCart();
+  const products = allProducts.filter(p => p.showOnWebsite !== false);
   
   const product = productId 
     ? products.find(p => p.id === productId) 
@@ -230,21 +231,24 @@ export default function ProductLandingPage({ productId, onBack }: ProductLanding
     <div className="bg-[#fcfdfd] min-h-screen font-sans selection:bg-emerald-100 selection:text-emerald-900 pb-28 lg:pb-12">
       {/* Premium Header */}
       <div className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-200/60 shadow-sm">
-        <div className="max-w-[1100px] mx-auto px-5 h-[72px] flex items-center justify-between">
+        <div className="max-w-[1100px] mx-auto px-5 h-[72px] flex items-center justify-between relative">
           <button 
             onClick={onBack || (() => setSelectedProduct(null))}
-            className="flex items-center gap-2.5 text-slate-500 hover:text-slate-900 font-bold transition-colors group"
+            className="flex items-center gap-2.5 text-slate-500 hover:text-slate-900 font-bold transition-colors group z-10"
           >
             <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 group-hover:bg-slate-100 group-hover:border-slate-300 transition-colors">
               <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
             </div>
-            <span className="text-[15px]">ফিরে যান</span>
+            
           </button>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-              <ShieldCheck size={14} /> নিরাপদ শপিং
+          
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-[18px] sm:text-[20px] font-black tracking-tight">
+              <span className="text-[#f58321]">Urbor</span> <span className="text-[#0b6132]">Food</span>
             </span>
           </div>
+          
+          <div className="w-[100px]"></div>
         </div>
       </div>
 

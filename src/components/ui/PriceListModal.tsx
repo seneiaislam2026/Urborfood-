@@ -6,7 +6,8 @@ import { useCart } from '../../context/CartContext';
 
 export default function PriceListModal() {
   const { isPriceListOpen, setIsPriceListOpen, setSelectedProduct } = useUI();
-  const { products, addToCart } = useCart();
+  const { products: allProducts, addToCart } = useCart();
+  const products = allProducts.filter(p => p.showOnWebsite !== false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);

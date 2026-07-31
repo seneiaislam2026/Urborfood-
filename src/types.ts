@@ -14,6 +14,8 @@ export interface Product {
   description?: string;
   stock?: number;
   lowStockAlert?: number;
+  showOnWebsite?: boolean;
+  barcode?: string;
 }
 
 export interface Category {

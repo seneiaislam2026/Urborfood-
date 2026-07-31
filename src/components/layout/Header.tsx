@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Menu, X, Truck, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, Truck, User, MapPin } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../../utils/storage';
@@ -45,32 +45,33 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full bg-white relative z-50 shadow-[0_2px_15px_rgba(0,0,0,0.04)] ">
+      <header className="w-full bg-white relative z-50 border-b border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)]">
         <div className="container mx-auto px-4 lg:px-6 h-[72px] sm:h-[80px] flex items-center justify-between max-w-[1400px]">
-          
           {/* Logo & Branding */}
           <div 
             onClick={() => { window.location.hash = ''; setActiveCategory(null); }}
-            className="flex items-center gap-2 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#f8fafc] rounded-xl flex items-center justify-center overflow-hidden border border-slate-100 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-[#f8fafc] rounded-xl flex items-center justify-center overflow-hidden border border-slate-100 group-hover:scale-105 transition-transform shadow-xs">
               <img src={ctxLogo} alt="Urbor Food Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] sm:text-[24px] font-black text-slate-800 leading-none tracking-tight">Urbor <span className="text-[#0b6132]">Food</span></span>
-              <span className="text-[10px] sm:text-xs text-slate-500 font-medium tracking-wide">শতভাগ ফ্রেশ</span>
+              <span className="text-[20px] sm:text-[22px] font-black text-[#f58321] leading-none tracking-tight">Urbor <span className="text-[#0b6132]">Food</span></span>
+              <span className="text-[10px] sm:text-[11px] text-slate-500 font-bold tracking-wider mt-0.5">শতভাগ ফ্রেশ</span>
             </div>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1.5">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
             {navLinks.map((link, index) => (
               <button 
                 key={index}
                 onClick={link.action}
-                className={`px-4 py-2 rounded-full text-[15px] font-bold transition-all cursor-pointer ${
-                  link.name === 'শপ' ? 'bg-[#0b6132]/10 text-[#0b6132]' : 'text-[#0b6132] hover:text-[#f58321] hover:bg-[#f58321]/10'
-                }`}
+                className={'px-3 py-2 rounded-xl text-xs xl:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ' + (
+                  link.name === 'শপ' 
+                    ? 'bg-[#0b6132] text-white shadow-sm' 
+                    : 'text-slate-700 hover:text-[#0b6132] hover:bg-emerald-50/70'
+                )}
               >
                 {link.name}
               </button>
@@ -78,15 +79,26 @@ export default function Header() {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-2.5 xl:gap-4 shrink-0">
+            {/* Map Icon */}
+            <a 
+              href="https://maps.app.goo.gl/eb9E5JaFmemKiPE39" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer flex items-center justify-center"
+              title="শপ লোকেশন"
+            >
+              <MapPin size={22} strokeWidth={2} />
+            </a>
             {/* Cart Icon (Mobile & Desktop) */}
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 text-[#0b6132] hover:text-[#f58321] transition-colors cursor-pointer flex items-center justify-center"
+              className="relative p-2 text-slate-700 hover:text-[#0b6132] hover:bg-slate-50 rounded-xl transition-all cursor-pointer flex items-center justify-center"
+              title="শপিং ব্যাগ"
             >
-              <ShoppingBag size={24} strokeWidth={2} />
+              <ShoppingBag size={22} strokeWidth={2} />
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 w-[18px] h-[18px] bg-[#F68B1F] text-white text-[10px] rounded-full flex items-center justify-center font-black border-2 border-white">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#f58321] text-white text-[9px] rounded-full flex items-center justify-center font-black border-2 border-white shadow-xs">
                   {cartCount}
                 </span>
               )}
@@ -95,12 +107,13 @@ export default function Header() {
             {/* Order Now Button (Desktop) */}
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="hidden sm:flex items-center justify-center bg-[#f58321] text-white px-7 py-2.5 rounded-full text-[15px] font-bold hover:bg-[#d86a10] hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer shadow-sm tracking-wide"
+              className="hidden sm:flex items-center justify-center bg-[#f58321] text-white px-5 py-2.5 rounded-xl text-xs xl:text-sm font-extrabold hover:bg-[#d86a10] hover:shadow-md active:scale-95 transition-all cursor-pointer shadow-xs tracking-wide whitespace-nowrap"
             >
               Order Now
             </button>
 
-                        <button 
+            {/* Login / Profile Button */}
+            <button 
               onClick={() => {
                 if (isAdmin) window.location.hash = '#admin';
                 else if (isCustomer) {
@@ -114,11 +127,12 @@ export default function Header() {
                 }
                 else window.location.hash = '#login';
               }}
-              className="hidden lg:flex items-center gap-2 text-slate-700 hover:text-[#0b6132] cursor-pointer text-sm font-bold ml-2"
+              className="hidden lg:flex items-center gap-1.5 text-slate-700 hover:text-[#0b6132] hover:bg-slate-50 border border-slate-200/80 hover:border-emerald-300 px-3 py-2 rounded-xl text-xs xl:text-sm font-bold cursor-pointer transition-all whitespace-nowrap"
             >
-              <User size={20} />
-              {isAdmin ? 'Admin' : isCustomer ? customerName : 'লগইন'}
+              <User size={18} />
+              <span>{isAdmin ? 'Admin' : isCustomer ? customerName : 'লগইন'}</span>
             </button>
+
             {/* Mobile Menu Toggle */}
             <button 
               className="lg:hidden p-2 text-[#0b6132] hover:text-[#f58321] cursor-pointer"
@@ -149,7 +163,7 @@ export default function Header() {
             <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-50">
               <img src={ctxLogo} alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="text-[18px] font-black text-slate-800 tracking-tight">Urbor <span className="text-[#0b6132]">Food</span></span>
+            <span className="text-[18px] font-black text-[#f58321] tracking-tight">Urbor <span className="text-[#0b6132]">Food</span></span>
           </div>
           <button 
             onClick={() => setIsMobileMenuOpen(false)}

@@ -8,134 +8,139 @@ interface POSInvoicePrintProps {
   adminName?: string;
 }
 
-// Convert numbers to words for "Amount in words"
-function numberToWords(num: number): string {
-  const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
-  const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+// Helper to format date and time
+const formatDate = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
-  let numStr = num.toString();
-  if (numStr.length > 9) return 'overflow';
-  const n = ('000000000' + numStr).substring(numStr.length > 9 ? numStr.length - 9 : 0).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-  if (!n) return ''; 
-  let str = '';
-  str += (n[1] != '00') ? (a[Number(n[1])] || b[n[1][0] as any] + ' ' + a[n[1][1] as any]) + 'Crore ' : '';
-  str += (n[2] != '00') ? (a[Number(n[2])] || b[n[2][0] as any] + ' ' + a[n[2][1] as any]) + 'Lakh ' : '';
-  str += (n[3] != '00') ? (a[Number(n[3])] || b[n[3][0] as any] + ' ' + a[n[3][1] as any]) + 'Thousand ' : '';
-  str += (n[4] != '0') ? (a[Number(n[4])] || b[n[4][0] as any] + ' ' + a[n[4][1] as any]) + 'Hundred ' : '';
-  str += (n[5] != '00') ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0] as any] + ' ' + a[n[5][1] as any]) : '';
-  return str.trim() ? str.trim() : 'Zero';
-}
+const formatTime = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+};
 
 export const POSInvoicePrint = forwardRef<HTMLDivElement, POSInvoicePrintProps>(({ order, adminName = 'Admin' }, ref) => {
-  const dateStr = new Date(order.date).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
-
-  const amountInWords = numberToWords(order.total) + ' Taka Only';
-  const invoiceNo = `SEL-UFB-${order.id.substring(0, 6).padStart(6, '0').toUpperCase()}`;
+  const invoiceNo = `ORD-${order.id.substring(0, 8).toUpperCase()}`;
+  
+  // Calculate totals
+  const subtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const deliveryCharge = order.total - subtotal;
 
   return (
-    <div ref={ref} className="bg-white p-4 text-black mx-auto text-[11px]" style={{ width: '80mm', fontFamily: 'monospace' }}>
-      {/* Header */}
+    <div ref={ref} className="bg-white text-black mx-auto p-4" style={{ width: '80mm', fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.4' }}>
+      
+      {/* --- Shop Header --- */}
       <div className="text-center mb-4">
-        {/* Logo Placeholder */}
         <div className="flex justify-center mb-2">
-          <img src="/logo.jpg" alt="Logo" className="w-12 h-12 grayscale object-contain" />
+          <img src="/logo.jpg" alt="Logo" className="w-16 h-16 grayscale object-contain" />
         </div>
-        <h1 className="font-bold text-lg mb-1">URBOR FOOD</h1>
-        <p className="leading-tight">
-          40 Feet Main Road, China Factory Mor, Bosila Garden City, Mohammadpur, Dhaka-1207
+        <h1 className="font-bold text-xl mb-1 leading-none tracking-wider">URBOR FOOD</h1>
+        <p className="font-semibold text-sm mb-1">Super Shop</p>
+        <p className="text-[11px] leading-snug max-w-[90%] mx-auto">
+          40 Feet Main Road, China Factory Mor,<br/>
+          Bosila Garden City, Mohammadpur, Dhaka
         </p>
-        <p className="mt-1">Mobile: 01335273946</p>
+        <p className="text-[11px] mt-1 font-semibold">Phone: 01335273946</p>
+        <p className="text-[11px]">BIN: 000000000-0000</p>
+        <div className="mt-2 text-[11px] font-bold">Mushak - 6.3</div>
       </div>
 
-      {/* Info */}
-      <div className="mb-4">
+      <div className="border-t-2 border-black border-dashed mb-3"></div>
+
+      {/* --- Bill Info --- */}
+      <div className="text-[11px] mb-3 space-y-1">
         <div className="flex justify-between">
-          <span className="w-20">Invoice No:</span>
-          <span className="flex-1">{invoiceNo}</span>
+          <span>Bill No: <span className="font-bold">{invoiceNo}</span></span>
+          <span>Date: {formatDate(order.date)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="w-20">Date:</span>
-          <span className="flex-1">{dateStr}</span>
+          <span>Cashier: {adminName}</span>
+          <span>Time: {formatTime(order.date)}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="w-20">Customer:</span>
-          <span className="flex-1">{order.customerName}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="w-20">Mobile:</span>
-          <span className="flex-1">{order.phone}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="w-20">User:</span>
-          <span className="flex-1">{adminName}</span>
-        </div>
-        <div className="text-center mt-3 font-bold text-sm">Mushak - 6.3</div>
-        <div className="text-center font-bold border-b border-black pb-1 mt-1 text-sm">INVOICE</div>
+        {order.customerName && order.customerName !== 'শপ কাস্টমার' && (
+          <div className="flex justify-between mt-1">
+            <span>Customer: {order.customerName}</span>
+          </div>
+        )}
+        {order.phone && order.phone !== 'N/A' && (
+          <div className="flex justify-between">
+            <span>Mobile: {order.phone}</span>
+          </div>
+        )}
       </div>
 
-      {/* Table */}
-      <table className="w-full mb-4 border-collapse">
+      <div className="border-t-2 border-black border-dashed mb-2"></div>
+
+      {/* --- Items Table --- */}
+      <table className="w-full text-[11px] mb-2">
         <thead>
-          <tr className="border-b border-black border-dashed">
-            <th className="text-left font-normal pb-1 w-6">Sl.</th>
-            <th className="text-left font-normal pb-1">Name</th>
-            <th className="text-right font-normal pb-1 w-12">Price</th>
-            <th className="text-right font-normal pb-1 w-8">Qty</th>
-            <th className="text-right font-normal pb-1 w-14">L.Total</th>
+          <tr className="border-b-2 border-black border-dashed">
+            <th className="text-left font-semibold pb-1">Item</th>
+            <th className="text-right font-semibold pb-1 w-8">Qty</th>
+            <th className="text-right font-semibold pb-1 w-12">Price</th>
+            <th className="text-right font-semibold pb-1 w-14">Total</th>
           </tr>
         </thead>
         <tbody>
           {order.items.map((item, index) => (
-            <tr key={index} className="border-b border-black border-dashed">
-              <td className="py-1 align-top">{index + 1}</td>
-              <td className="py-1 pr-1 truncate max-w-[90px]">{item.name}</td>
-              <td className="py-1 text-right align-top">{item.price.toFixed(2)}</td>
-              <td className="py-1 text-right align-top">{item.quantity}</td>
-              <td className="py-1 text-right align-top">{(item.price * item.quantity).toFixed(2)}</td>
-            </tr>
+            <React.Fragment key={index}>
+              <tr>
+                <td colSpan={4} className="pt-1 pb-0 font-medium truncate max-w-[200px]">{item.name}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td className="text-right pb-1 align-top text-gray-700">{item.quantity}</td>
+                <td className="text-right pb-1 align-top text-gray-700">{item.price.toFixed(2)}</td>
+                <td className="text-right pb-1 align-top font-semibold">{(item.price * item.quantity).toFixed(2)}</td>
+              </tr>
+            </React.Fragment>
           ))}
         </tbody>
       </table>
 
-      {/* Totals */}
-      <div className="flex flex-col items-end mb-4 pr-1">
-        <div className="flex justify-between w-40 border-b border-black border-dashed pb-1">
+      <div className="border-t-2 border-black border-dashed mb-2"></div>
+
+      {/* --- Totals --- */}
+      <div className="text-[12px] space-y-1 mb-3">
+        <div className="flex justify-between">
           <span>Sub Total:</span>
-          <span>{order.total.toFixed(2)}</span>
+          <span>{subtotal.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between w-40 border-b border-black border-dashed py-1">
-          <span>Gross Total:</span>
-          <span>{order.total.toFixed(2)}</span>
+        {deliveryCharge > 0 && (
+          <div className="flex justify-between">
+            <span>Delivery/Other:</span>
+            <span>{deliveryCharge.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="border-t border-black mt-1 mb-1"></div>
+        <div className="flex justify-between font-bold text-[14px]">
+          <span>NET PAYABLE:</span>
+          <span>Tk {order.total.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between w-40 border-b border-black border-dashed py-1">
+        <div className="border-t border-black mt-1 mb-1"></div>
+        <div className="flex justify-between text-[11px]">
           <span>Paid Amount:</span>
           <span>{order.status === 'Completed' ? order.total.toFixed(2) : '0.00'}</span>
         </div>
-        <div className="flex justify-between w-40 border-b border-black border-dashed py-1">
-          <span>Outstanding:</span>
-          <span>{order.status === 'Completed' ? '0.00' : order.total.toFixed(2)}</span>
+        <div className="flex justify-between text-[11px]">
+          <span>Change Amount:</span>
+          <span>0.00</span>
         </div>
       </div>
 
-      <div className="italic mb-4 break-words">
-        Amount in words:{amountInWords}
+      <div className="border-t-2 border-black border-dashed mb-4"></div>
+
+      {/* --- Barcode & Footer --- */}
+      <div className="flex flex-col items-center gap-3 mb-4">
+        <Barcode value={invoiceNo} width={1.2} height={30} fontSize={11} displayValue={true} margin={0} />
       </div>
 
-      {/* Barcode & QR Code */}
-      <div className="flex flex-col items-center gap-4 mb-4 mt-8">
-        <Barcode value={invoiceNo} width={1.2} height={40} fontSize={12} displayValue={false} margin={0} />
-        <QRCode value={invoiceNo} size={80} level="M" />
+      <div className="text-center text-[11px] mt-4 space-y-1">
+        <p className="font-bold">*** THANK YOU FOR SHOPPING ***</p>
+        <p>Please come again</p>
+        <p className="text-[9px] mt-2 text-gray-600">Software by Arctic Technologies</p>
       </div>
 
-      {/* Footer */}
-      <div className="text-center space-y-1 text-gray-700 mt-6">
-        <p>Thank you for choosing us!</p>
-        <p className="text-[10px]">© Arctic Technologies</p>
-      </div>
     </div>
   );
 });
